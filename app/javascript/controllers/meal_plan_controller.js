@@ -9,7 +9,7 @@ export default class extends Controller {
   }
 
   updatePrompt() {
-    const form = document.getElementById("meal-plan-form")
+    const form = document.getElementById("new_meal_plan_form")
     const data = new FormData(form)
     fetch("/home/meal_plan_prompt_preview", {
       method: "POST",

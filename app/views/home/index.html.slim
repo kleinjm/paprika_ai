@@ -1,44 +1,65 @@
 - if flash[:notice]
   .alert.alert-info = flash[:notice]
 
-.container.mx-auto.px-4.py-8
-  h1.text-4xl.font-bold.mb-8 Paprika AI Assistant
+.container-fluid.py-4
+  .row
+    .col-12.mb-4
+      h1.display-4.text-center.mb-4 Paprika AI Assistant
 
-  .grid.grid-cols-1.md:grid-cols-2.gap-8
-    / Meal Planning section at the top
-    .bg-white.rounded-lg.shadow.p-6.md:col-span-2
-      h2.text-2xl.font-semibold.mb-4 Meal Planning
-      = form_with url: suggest_meal_plan_home_index_path, method: :post, class: "space-y-4", data: { turbo: true, controller: "meal-plan" }, id: "meal-plan-form" do |f|
-        .mb-4
-          = f.label :categories, "Select categories to include:", class: "block text-sm font-medium text-gray-700"
-          = f.collection_select :category_ids, Paprika::RecipeCategory.all, :id, :name, {}, { multiple: true, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", data: { action: "change->meal-plan#updatePrompt" } }
-        .mb-4
-          = f.label :prompt, "Prompt:", class: "block text-sm font-medium text-gray-700"
-          = f.text_area :prompt, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", rows: 3, value: "Suggest a meal plan for this week", data: { action: "input->meal-plan#updatePrompt" }
-        .mb-4
-          = f.label :num_recipes, "Number of recipes:", class: "block text-sm font-medium text-gray-700"
-          = f.number_field :num_recipes, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", min: 1, value: 4, data: { action: "input->meal-plan#updatePrompt change->meal-plan#updatePrompt" }
-        = f.submit "Generate Meal Plan", class: "bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600"
-        = render partial: "meal_plan_prompt_preview", locals: { prompt: nil }
-      #meal_plan.mt-4
-        = render partial: "meal_plan", locals: { meal_plan: local_assigns[:meal_plan] }
+  .row
+    / Meal Planning section
+    .col-12.mb-4
+      .card.shadow-sm
+        .card-header.bg-primary.text-white
+          h2.h4.mb-0 Meal Planning
+        .card-body
+          = simple_form_for @meal_plan_form, url: suggest_meal_plan_home_index_path, method: :post, data: { turbo: true, controller: "meal-plan" } do |f|
+            .row
+              .col-md-6
+                = f.input :category_ids, collection: Paprika::RecipeCategory.all, label_method: :name, value_method: :id, input_html: { multiple: true, class: "form-select", data: { action: "change->meal-plan#updatePrompt" } }
+              .col-md-6
+                = f.input :num_recipes, input_html: { min: 1, value: 4, class: "form-control", data: { action: "input->meal-plan#updatePrompt change->meal-plan#updatePrompt" } }
+            .row.mt-3
+              .col-12
+                = f.input :prompt, input_html: { rows: 3, class: "form-control", data: { action: "input->meal-plan#updatePrompt" } }
+            .row.mt-3
+              .col-12
+                = f.button :submit, "Generate Meal Plan", class: "btn btn-primary"
 
-    .bg-white.rounded-lg.shadow.p-6
-      h2.text-2xl.font-semibold.mb-4 Recipe Analysis
-      .space-y-4
-        - @recipes.each do |recipe|
-          .border.rounded.p-4
-            h3.font-medium = recipe.name
-            - if recipe.recipe_categories.any?
-              p.text-sm.text-gray-500.mb-2 = recipe.recipe_categories.map(&:name).join(", ")
-            = button_to "Analyze", analyze_recipe_home_index_path(id: recipe.id), class: "mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600", data: { turbo: true }, id: "recipe_analysis_#{recipe.id}"
+                .accordion.mt-3#promptPreviewAccordion
+                  .accordion-item
+                    h2.accordion-header#promptPreviewHeader
+                      button.accordion-button.collapsed type="button" data-bs-toggle="collapse" data-bs-target="#promptPreviewCollapse" aria-expanded="false" aria-controls="promptPreviewCollapse"
+                        | Prompt Preview
+                    #promptPreviewCollapse.accordion-collapse.collapse aria-labelledby="promptPreviewHeader" data-bs-parent="#promptPreviewAccordion"
+                      .accordion-body
+                        = render partial: "meal_plan_prompt_preview", locals: { prompt: nil }
 
-    .bg-white.rounded-lg.shadow.p-6
-      h2.text-2xl.font-semibold.mb-4 Ingredient Substitutions
-      = form_with url: suggest_substitutions_home_index_path, method: :post, class: "space-y-4", data: { turbo: true } do |f|
-        .mb-4
-          = f.label :ingredient, class: "block text-sm font-medium text-gray-700"
-          = f.text_field :ingredient, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-        = f.submit "Get Substitutions", class: "bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
-      #substitutions.mt-4
-        = render partial: "substitutions", locals: { substitutions: local_assigns[:substitutions] }
+            #meal_plan.mt-4
+              = render partial: "meal_plan", locals: { meal_plan: local_assigns[:meal_plan] }
+
+    / Recipe List section
+    .col-md-6.mb-4
+      .card.shadow-sm
+        .card-header.bg-info.text-white
+          h2.h4.mb-0 Recipe Analysis
+        .card-body
+          .list-group
+            - @recipes.each do |recipe|
+              .list-group-item
+                h5.h6.mb-1 = recipe.name
+                - if recipe.recipe_categories.any?
+                  p.text-muted.small.mb-2 = recipe.recipe_categories.map(&:name).join(", ")
+                = button_to "Analyze", analyze_recipe_home_index_path(id: recipe.id), class: "btn btn-sm btn-outline-primary", data: { turbo: true }, id: "recipe_analysis_#{recipe.id}"
+
+    / Substitutions section
+    .col-md-6.mb-4
+      .card.shadow-sm
+        .card-header.bg-success.text-white
+          h2.h4.mb-0 Ingredient Substitutions
+        .card-body
+          = simple_form_for :substitution, url: suggest_substitutions_home_index_path, method: :post, data: { turbo: true } do |f|
+            = f.input :ingredient, label: false, placeholder: "Enter an ingredient", input_html: { class: "form-control" }
+            = f.button :submit, "Get Substitutions", class: "btn btn-success"
+          #substitutions.mt-4
+            = render partial: "substitutions", locals: { substitutions: local_assigns[:substitutions] }

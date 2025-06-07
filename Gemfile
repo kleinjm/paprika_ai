@@ -75,5 +75,6 @@ end
 gem "slim-rails", "~> 3.7"
 
 gem "bootstrap", "~> 5.3"
+gem "cssbundling-rails"
 
 gem "simple_form", "~> 5.3"

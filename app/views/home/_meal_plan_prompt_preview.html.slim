@@ -1,9 +1,9 @@
-#meal_plan_prompt_preview.mt-2
+#meal_plan_prompt_preview
   - if prompt.present?
-    .bg-yellow-50.text-yellow-900.p-2.rounded.text-sm
+    .alert.alert-warning.mb-0
       strong Prompt Preview:
       |  #{prompt}
   - else
-    .bg-yellow-50.text-yellow-900.p-2.rounded.text-sm
+    .alert.alert-warning.mb-0
       strong Prompt Preview:
       |  (Prompt will appear here)
