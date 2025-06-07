@@ -11,33 +11,10 @@ class GeminiService
     )
   end
 
-  def analyze_recipe(recipe)
-    prompt = "Analyze this recipe:\n\n#{recipe.name}\n\nIngredients:\n#{recipe.ingredients}\n\nInstructions:\n#{recipe.directions}"
-
+  def generate_content(prompt:)
     result = @client.generate_content(
       { contents: { role: "user", parts: { text: prompt } } }
     )
-
-    result.dig("candidates", 0, "content", "parts", 0, "text")
-  end
-
-  def suggest_substitutions(ingredient)
-    prompt = "Suggest substitutions for #{ingredient}"
-
-    result = @client.generate_content(
-      { contents: { role: "user", parts: { text: prompt } } }
-    )
-
-    result.dig("candidates", 0, "content", "parts", 0, "text")
-  end
-
-  def suggest_meal_plan(recipes:, prompt:)
-    prompt += "\n\nRecipes:\n#{recipes.map(&:name).join(", ")}"
-
-    result = @client.generate_content(
-      { contents: { role: "user", parts: { text: prompt } } }
-    )
-
     result.dig("candidates", 0, "content", "parts", 0, "text")
   end
 end

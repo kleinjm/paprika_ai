@@ -14,13 +14,12 @@
           = f.collection_select :category_ids, Paprika::RecipeCategory.all, :id, :name, {}, { multiple: true, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", data: { action: "change->meal-plan#updatePrompt" } }
         .mb-4
           = f.label :prompt, "Prompt:", class: "block text-sm font-medium text-gray-700"
-          = f.text_field :prompt, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", value: "Suggest a meal plan for", data: { action: "input->meal-plan#updatePrompt" }
+          = f.text_area :prompt, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", rows: 3, value: "Suggest a meal plan for this week", data: { action: "input->meal-plan#updatePrompt" }
         .mb-4
           = f.label :num_recipes, "Number of recipes:", class: "block text-sm font-medium text-gray-700"
-          = f.number_field :num_recipes, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", min: 1, value: 5, data: { action: "input->meal-plan#updatePrompt change->meal-plan#updatePrompt" }
+          = f.number_field :num_recipes, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", min: 1, value: 4, data: { action: "input->meal-plan#updatePrompt change->meal-plan#updatePrompt" }
         = f.submit "Generate Meal Plan", class: "bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600"
-        #meal_plan_prompt_preview.mt-2
-          = render partial: "meal_plan_prompt_preview", locals: { prompt: nil }
+        = render partial: "meal_plan_prompt_preview", locals: { prompt: nil }
       #meal_plan.mt-4
         = render partial: "meal_plan", locals: { meal_plan: local_assigns[:meal_plan] }
 

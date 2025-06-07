@@ -63,5 +63,14 @@ module Paprika
     has_many :recipe_photos, class_name: "Paprika::RecipePhoto", foreign_key: "ZRECIPE"
     has_many :menu_items, class_name: "Paprika::MenuItem", foreign_key: "ZRECIPE"
     has_many :menus, through: :menu_items, class_name: "Paprika::Menu"
+
+    def to_ai_json
+      {
+        name: name,
+        ingredients: ingredients,
+        directions: directions,
+        categories: recipe_categories.map(&:name)
+      }
+    end
   end
 end
