@@ -16,12 +16,10 @@
           = simple_form_for @meal_plan_form, url: suggest_meal_plan_home_index_path, method: :post, data: { turbo: true, controller: "meal-plan" } do |f|
             .row
               .col-md-6
-                = f.input :category_ids, collection: Paprika::RecipeCategory.all, label_method: :name, value_method: :id, input_html: { multiple: true, class: "form-select", data: { action: "change->meal-plan#updatePrompt" } }
+                = f.input :category_ids, collection: Paprika::RecipeCategory.all.order(:name), label_method: :name, value_method: :id, input_html: { multiple: true, class: "form-select", style: "height: 515px;", data: { action: "change->meal-plan#updatePrompt" } }
               .col-md-6
                 = f.input :num_recipes, input_html: { min: 1, value: 4, class: "form-control", data: { action: "input->meal-plan#updatePrompt change->meal-plan#updatePrompt" } }
-            .row.mt-3
-              .col-12
-                = f.input :prompt, input_html: { rows: 3, class: "form-control", data: { action: "input->meal-plan#updatePrompt" } }
+                = f.input :prompt, as: :text, input_html: { rows: 5, class: "form-control", data: { action: "input->meal-plan#updatePrompt" } }
             .row.mt-3
               .col-12
                 = f.button :submit, "Generate Meal Plan", class: "btn btn-primary"
