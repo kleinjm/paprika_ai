@@ -17,6 +17,7 @@ Rails.application.routes.draw do
       post :analyze_recipe
       post :suggest_substitutions
       post :suggest_meal_plan
+      post :meal_plan_prompt_preview
     end
   end
 end
