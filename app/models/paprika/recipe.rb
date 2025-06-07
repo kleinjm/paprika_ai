@@ -55,8 +55,11 @@ module Paprika
     attribute :directions, :string
     alias_attribute :directions, :ZDIRECTIONS
 
-    has_many :recipe_categories, class_name: "Paprika::RecipeCategory", foreign_key: "ZRECIPE"
-    has_many :categories, through: :recipe_categories, class_name: "Paprika::Category"
+    # This is the join table for recipes and categories.
+    has_many :categories, class_name: "Paprika::Category", foreign_key: "Z_12RECIPES"
+    # This the actual categories for a recipe.
+    has_many :recipe_categories, class_name: "Paprika::RecipeCategory", through: :categories
+
     has_many :recipe_photos, class_name: "Paprika::RecipePhoto", foreign_key: "ZRECIPE"
     has_many :menu_items, class_name: "Paprika::MenuItem", foreign_key: "ZRECIPE"
     has_many :menus, through: :menu_items, class_name: "Paprika::Menu"

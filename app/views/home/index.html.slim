@@ -1,0 +1,40 @@
+- if flash[:notice]
+  .alert.alert-info = flash[:notice]
+
+.container.mx-auto.px-4.py-8
+  h1.text-4xl.font-bold.mb-8 Paprika AI Assistant
+
+  .grid.grid-cols-1.md:grid-cols-2.gap-8
+    / Meal Planning section at the top
+    .bg-white.rounded-lg.shadow.p-6.md:col-span-2
+      h2.text-2xl.font-semibold.mb-4 Meal Planning
+      = form_with url: suggest_meal_plan_home_index_path, method: :post, class: "space-y-4", data: { turbo: true } do |f|
+        .mb-4
+          = f.label :categories, "Select categories to include:", class: "block text-sm font-medium text-gray-700"
+          = f.collection_select :category_ids, Paprika::RecipeCategory.all, :id, :name, {}, { multiple: true, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" }
+        .mb-4
+          = f.label :prompt, "Prompt:", class: "block text-sm font-medium text-gray-700"
+          = f.text_field :prompt, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", value: "Suggest a meal plan for"
+        = f.submit "Generate Meal Plan", class: "bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600"
+      #meal_plan.mt-4
+        = render partial: "meal_plan", locals: { meal_plan: local_assigns[:meal_plan] }
+
+    .bg-white.rounded-lg.shadow.p-6
+      h2.text-2xl.font-semibold.mb-4 Recipe Analysis
+      .space-y-4
+        - @recipes.each do |recipe|
+          .border.rounded.p-4
+            h3.font-medium = recipe.name
+            - if recipe.recipe_categories.any?
+              p.text-sm.text-gray-500.mb-2 = recipe.recipe_categories.map(&:name).join(", ")
+            = button_to "Analyze", analyze_recipe_home_index_path(id: recipe.id), class: "mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600", data: { turbo: true }, id: "recipe_analysis_#{recipe.id}"
+
+    .bg-white.rounded-lg.shadow.p-6
+      h2.text-2xl.font-semibold.mb-4 Ingredient Substitutions
+      = form_with url: suggest_substitutions_home_index_path, method: :post, class: "space-y-4", data: { turbo: true } do |f|
+        .mb-4
+          = f.label :ingredient, class: "block text-sm font-medium text-gray-700"
+          = f.text_field :ingredient, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+        = f.submit "Get Substitutions", class: "bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+      #substitutions.mt-4
+        = render partial: "substitutions", locals: { substitutions: local_assigns[:substitutions] }

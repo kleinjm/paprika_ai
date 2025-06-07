@@ -1,27 +1,21 @@
 # Schema Information
 #
-# Table name: ZRECIPECATEGORY
+# Table name: Z_12CATEGORIES
 #
-#  Z_PK        :integer          primary key
-#  Z_ENT       :integer
-#  Z_OPT       :integer
-#  ZISSYNCED   :integer
-#  ZORDERFLAG  :integer
-#  ZPARENT     :integer
-#  ZNAME       :string
-#  ZSTATUS     :string
-#  ZUID        :string
+#  Z_12RECIPES    :integer
+#  Z_13CATEGORIES :integer
 #
 # Indexes
 #
-#  Z_RecipeCategory_byUidIndex  (ZUID)
-#  ZRECIPECATEGORY_ZPARENT_INDEX (ZPARENT)
+#  Z_12CATEGORIES_Z_13CATEGORIES_INDEX  (Z_13CATEGORIES, Z_12RECIPES)
 #
+
+# This table is the join table for recipes and categories.
 module Paprika
   class Category < ApplicationRecord
     self.table_name = "Z_12CATEGORIES"
 
-    has_many :recipe_categories, class_name: "Paprika::RecipeCategory", foreign_key: "Z_12CATEGORIES"
-    has_many :recipes, through: :recipe_categories
+    belongs_to :recipe_category, class_name: "Paprika::RecipeCategory", foreign_key: "Z_13CATEGORIES"
+    belongs_to :recipe, class_name: "Paprika::Recipe", foreign_key: "Z_12RECIPES"
   end
 end
