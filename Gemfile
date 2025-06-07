@@ -9,7 +9,7 @@ gem "pg", "~> 1.1"
 # Use sqlite3 for readonly Paprika database
 gem "sqlite3", "~> 2.1"
 # Use OpenAI for ChatGPT integration
-gem "ruby-openai", "~> 5.0"
+gem "ruby-openai", "~> 8.1"
 # Use the Puma web server [https://github.com/puma/puma]
 gem "puma", ">= 5.0"
 # Use JavaScript with ESM import maps [https://github.com/rails/importmap-rails]
