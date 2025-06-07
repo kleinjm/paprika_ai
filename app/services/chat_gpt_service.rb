@@ -6,11 +6,12 @@ class ChatGptService
   def chat(messages)
     response = @client.chat(
       parameters: {
-        model: "gpt-4-turbo-preview",
+        model: "gpt-4o-mini",
         messages: messages,
         temperature: 0.7
       }
     )
+    binding.pry
     response.dig("choices", 0, "message", "content")
   end
 

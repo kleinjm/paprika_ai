@@ -1,3 +1,22 @@
+# Schema Information
+#
+# Table name: ZMENU
+#
+#  Z_PK        :integer          primary key
+#  Z_ENT       :integer
+#  Z_OPT       :integer
+#  ZDAYS       :integer
+#  ZISSYNCED   :integer
+#  ZORDERFLAG  :integer
+#  ZNAME       :string
+#  ZNOTES      :string
+#  ZSTATUS     :string
+#  ZUID        :string
+#
+# Indexes
+#
+#  Z_Menu_byUidIndex  (ZUID)
+#
 module Paprika
   class Menu < ApplicationRecord
     self.table_name = "ZMENU"

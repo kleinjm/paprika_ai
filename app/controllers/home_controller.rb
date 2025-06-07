@@ -1,12 +1,14 @@
 class HomeController < ApplicationController
   def index
     @recipes = Paprika::Recipe.all
-    @chat_gpt = ChatGptService.new
+    # @chat_gpt = ChatGptService.new
+    @gemini = GeminiService.new
   end
 
   def analyze_recipe
     recipe = Paprika::Recipe.find(params[:id])
-    @analysis = ChatGptService.new.analyze_recipe(recipe)
+    # @analysis = ChatGptService.new.analyze_recipe(recipe)
+    @analysis = GeminiService.new.analyze_recipe(recipe)
     render turbo_stream: turbo_stream.replace("recipe_analysis", partial: "recipe_analysis", locals: { analysis: @analysis })
   end
 
