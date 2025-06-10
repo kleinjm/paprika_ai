@@ -7,7 +7,7 @@ gem "propshaft"
 # Use postgresql as the database for Active Record
 gem "pg", "~> 1.1"
 # Use sqlite3 for readonly Paprika database
-gem "sqlite3", "~> 2.1"
+gem "sqlite3", "~> 2.7"
 # Use OpenAI for ChatGPT integration
 gem "ruby-openai", "~> 5.0"
 # Use the Puma web server [https://github.com/puma/puma]
