@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rails --help)",
+      "Bash(bundle exec rails:*)",
+      "Bash(cat:*)",
+      "Bash(bundle install:*)",
+      "Bash(sudo xcodebuild:*)",
+      "Bash(ruby --version)",
+      "Bash(gem install:*)",
+      "Bash(yarn install)",
+      "Bash(brew services:*)",
+      "Bash(yarn build:*)",
+      "Read(//Users/jklein/Library/Group Containers/72KVKW69K8.com.hindsightlabs.paprika.mac.v3/Data/Database/**)",
+      "Bash(sqlite3:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
