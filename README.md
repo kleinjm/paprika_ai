@@ -7,7 +7,7 @@ An AI-powered assistant for your Paprika Recipe Manager database. This applicati
 - 🤖 AI-powered meal planning
 - 📊 Recipe analysis and insights
 - 🔄 Ingredient substitution suggestions
-- 🏷️ Category-based recipe filtering
+- 🏷️  Category-based recipe filtering
 - 📱 Modern, responsive UI
 
 ## Database Schema
