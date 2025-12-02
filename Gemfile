@@ -47,7 +47,7 @@ gem "thruster", require: false
 # gem "image_processing", "~> 1.2"
 
 # Add the 'gemini-ai' gem for Google Gemini integration
-gem "gemini-ai", "~> 4.2.0"
+gem "gemini-ai", "~> 4.3.0"
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem

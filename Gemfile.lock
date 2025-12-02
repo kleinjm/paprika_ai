@@ -119,13 +119,13 @@ GEM
     ethon (0.16.0)
       ffi (>= 1.15.0)
     event_stream_parser (1.0.0)
-    faraday (2.13.1)
+    faraday (2.13.2)
       faraday-net_http (>= 2.0, < 3.5)
       json
       logger
     faraday-multipart (1.1.0)
       multipart-post (~> 2.0)
-    faraday-net_http (3.4.0)
+    faraday-net_http (3.4.1)
       net-http (>= 0.5.0)
     faraday-typhoeus (1.1.0)
       faraday (~> 2.0)
@@ -140,9 +140,9 @@ GEM
     fugit (1.11.1)
       et-orbi (~> 1, >= 1.2.11)
       raabro (~> 1.4)
-    gemini-ai (4.2.0)
+    gemini-ai (4.3.0)
       event_stream_parser (~> 1.0)
-      faraday (~> 2.10)
+      faraday (~> 2.13, >= 2.13.2)
       faraday-typhoeus (~> 1.1)
       googleauth (~> 1.8)
       typhoeus (~> 1.4, >= 1.4.1)
@@ -175,7 +175,7 @@ GEM
       actionview (>= 5.0.0)
       activesupport (>= 5.0.0)
     json (2.12.2)
-    jwt (2.10.1)
+    jwt (2.10.2)
       base64
     kamal (2.6.1)
       activesupport (>= 7.0)
@@ -455,7 +455,7 @@ DEPENDENCIES
   cssbundling-rails
   debug
   dotenv-rails
-  gemini-ai (~> 4.2.0)
+  gemini-ai (~> 4.3.0)
   importmap-rails
   jbuilder
   kamal
