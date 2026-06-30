@@ -1,14 +1,33 @@
 # Paprika AI Assistant
 
+[![CI](https://github.com/kleinjm/paprika_ai/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/kleinjm/paprika_ai/actions/workflows/ci.yml)
+
 An AI-powered assistant for your Paprika Recipe Manager database. This application provides intelligent features like meal planning, recipe analysis, and ingredient substitutions using AI.
 
 ## Features
 
-- 🤖 AI-powered meal planning
-- 📊 Recipe analysis and insights
-- 🔄 Ingredient substitution suggestions
-- 🏷️  Category-based recipe filtering
-- 📱 Modern, responsive UI
+### AI Meal Planning
+- Multi-select recipe categories from your Paprika library to constrain the candidate pool
+- Configurable number of recipes (default 4) and a customizable prompt, with a detailed default covering leftovers, stove/oven contention, and cuisine pairing
+- Live prompt preview that updates as you tweak categories, count, or prompt text (Stimulus `meal-plan` controller backed by `home#meal_plan_prompt_preview`)
+- Sends the candidate recipe pool as JSON to Gemini and returns a day-grouped meal plan with reasoning
+
+### AI Recipe Analysis
+- Lists every recipe from the read-only Paprika SQLite database along with its categories
+- One-click "Analyze" button per recipe sends name, ingredients, and directions to Gemini
+- Results render in place via Turbo Streams
+
+### AI Ingredient Substitutions
+- Free-text ingredient input returns Gemini-generated substitution suggestions, rendered via Turbo Stream
+
+### Paprika Data Layer (read-only)
+- ActiveRecord models against the Paprika SQLite database: Recipe, Category / RecipeCategory, Menu / MenuItem, Meal / MealType, GroceryList / GroceryItem / GroceryAisle, PantryItem, Bookmark, RecipePhoto, SyncStatus
+- `Recipe#to_ai_json` shape used to feed AI prompts
+
+### Infrastructure
+- `GeminiService` (primary, `gemini-2.0-flash`) with a stubbed-out `ChatGptService` alternative
+- Dual database setup: PostgreSQL for app data, SQLite for the Paprika source
+- Bootstrap 5.3 + SASS pipeline, Hotwire (Turbo Streams + Stimulus), importmap, PWA scaffolding
 
 ## Database Schema
 
