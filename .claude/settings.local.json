@@ -12,7 +12,8 @@
       "Bash(brew services:*)",
       "Bash(yarn build:*)",
       "Read(//Users/jklein/Library/Group Containers/72KVKW69K8.com.hindsightlabs.paprika.mac.v3/Data/Database/**)",
-      "Bash(sqlite3:*)"
+      "Bash(sqlite3:*)",
+      "Bash(git push origin main)"
     ],
     "deny": [],
     "ask": []
