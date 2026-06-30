@@ -8,6 +8,8 @@ gem "propshaft"
 gem "pg", "~> 1.1"
 # Use sqlite3 for readonly Paprika database
 gem "sqlite3", "~> 2.1"
+# tsort is used by Rails internals but is no longer a default gem in Ruby 4.1+
+gem "tsort"
 # Use OpenAI for ChatGPT integration
 gem "ruby-openai", "~> 5.0"
 # Use the Puma web server [https://github.com/puma/puma]
