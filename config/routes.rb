@@ -12,6 +12,9 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   root "home#index"
 
+  get "nutrition" => "nutrition#show", as: :nutrition
+  post "nutrition/log" => "nutrition#log", as: :nutrition_log
+
   resources :home, only: [ :index ] do
     collection do
       get :recipe_analysis

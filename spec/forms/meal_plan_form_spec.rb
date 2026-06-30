@@ -1,27 +1,9 @@
-require "spec_helper"
-require "active_model"
-require "json"
-
-module Paprika
-  class Recipe
-    def self.all = @all ||= []
-    def self.reset!(records) = @all = records
-    def self.joins(*) = RelationStub.new(@all || [])
-  end
-
-  class RelationStub
-    def initialize(records) = @records = records
-    def where(*) = self
-    def distinct = @records
-  end
-end
-
-require_relative "../../app/forms/meal_plan_form"
+require "rails_helper"
 
 RSpec.describe MealPlanForm do
   let(:recipe) { double("Recipe", to_ai_json: { id: 1, name: "Chili" }) }
 
-  before { Paprika::Recipe.reset!([recipe]) }
+  before { allow(Paprika::Recipe).to receive(:all).and_return([recipe]) }
 
   describe "defaults" do
     it "uses the default prompt and 4 recipes when nothing is passed" do
@@ -77,9 +59,10 @@ RSpec.describe MealPlanForm do
 
     it "filters recipes by category_ids when provided" do
       other = double("Recipe", to_ai_json: { id: 2, name: "Tacos" })
-      relation = Paprika::RelationStub.new([other])
+      relation = double("Relation")
       allow(Paprika::Recipe).to receive(:joins).and_return(relation)
       allow(relation).to receive(:where).and_return(relation)
+      allow(relation).to receive(:distinct).and_return([other])
 
       form = described_class.new(category_ids: [42], num_recipes: 1)
       result = form.build_prompt

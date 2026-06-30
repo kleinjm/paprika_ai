@@ -1,0 +1,13 @@
+.row.text-center
+  .col
+    .h3.mb-0 = totals[:calories].to_i
+    .text-muted.small Calories
+  .col
+    .h3.mb-0.text-primary = "#{totals[:protein].to_f.round}g"
+    .text-muted.small Protein
+  .col
+    .h3.mb-0 = "#{totals[:carbs].to_f.round}g"
+    .text-muted.small Carbs
+  .col
+    .h3.mb-0 = "#{totals[:fat].to_f.round}g"
+    .text-muted.small Fat

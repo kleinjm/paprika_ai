@@ -1,0 +1,11 @@
+= turbo_stream.replace "nutrition_totals" do
+  #nutrition_totals
+    = render partial: "totals", locals: { totals: @totals }
+
+= turbo_stream.replace "nutrition_reply" do
+  #nutrition_reply.mb-3
+    = render partial: "reply", locals: { reply: @reply }
+
+= turbo_stream.replace "nutrition_log" do
+  #nutrition_log
+    = render partial: "entries", locals: { entries: @entries }

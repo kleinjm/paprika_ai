@@ -54,6 +54,8 @@ module Paprika
     alias_attribute :ingredients, :ZINGREDIENTS
     attribute :directions, :string
     alias_attribute :directions, :ZDIRECTIONS
+    attribute :nutritional_info, :string
+    alias_attribute :nutritional_info, :ZNUTRITIONALINFO
 
     # This is the join table for recipes and categories.
     has_many :categories, class_name: "Paprika::Category", foreign_key: "Z_12RECIPES"
@@ -71,6 +73,17 @@ module Paprika
         directions: directions,
         categories: recipe_categories.map(&:name)
       }
+    end
+
+    # Persist AI-computed batch macros into the Paprika nutrition field using the
+    # writable connection. Writes via Z_PK so it works on read-only model instances.
+    def update_nutritional_info!(text)
+      Paprika::WritableApplicationRecord.connection.exec_update(
+        ActiveRecord::Base.sanitize_sql(
+          [ "UPDATE ZRECIPE SET ZNUTRITIONALINFO = ? WHERE Z_PK = ?", text, id ]
+        ),
+        "Paprika Nutrition Update"
+      )
     end
   end
 end

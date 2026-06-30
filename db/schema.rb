@@ -10,8 +10,21 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 0) do
+ActiveRecord::Schema[8.0].define(version: 2026_06_29_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
+  create_table "nutrition_entries", force: :cascade do |t|
+    t.date "logged_on", null: false
+    t.text "raw_input"
+    t.string "item", null: false
+    t.integer "calories"
+    t.decimal "protein", precision: 6, scale: 1
+    t.decimal "carbs", precision: 6, scale: 1
+    t.decimal "fat", precision: 6, scale: 1
+    t.string "recipe_match"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["logged_on"], name: "index_nutrition_entries_on_logged_on"
+  end
 end

@@ -1,0 +1,23 @@
+- if entries.any?
+  .table-responsive
+    table.table.table-sm.mb-0
+      thead
+        tr
+          th Item
+          th.text-end Cal
+          th.text-end Protein
+          th.text-end Carbs
+          th.text-end Fat
+      tbody
+        - entries.each do |entry|
+          tr
+            td
+              = entry.item
+              - if entry.recipe_match.present?
+                span.badge.bg-light.text-dark.ms-1 = entry.recipe_match
+            td.text-end = entry.calories
+            td.text-end = entry.protein.present? ? "#{entry.protein.to_f.round}g" : "—"
+            td.text-end = entry.carbs.present? ? "#{entry.carbs.to_f.round}g" : "—"
+            td.text-end = entry.fat.present? ? "#{entry.fat.to_f.round}g" : "—"
+- else
+  .card-body.text-muted Nothing logged yet today.

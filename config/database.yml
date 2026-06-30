@@ -28,6 +28,12 @@ readonly_paprika:
   database: "/Users/jklein/Library/Group Containers/72KVKW69K8.com.hindsightlabs.paprika.mac.v3/Data/Database/Paprika.sqlite"
   readonly: true
 
+# Writable connection to the same Paprika database. Used only to update the
+# ZNUTRITIONALINFO field with AI-computed batch macros.
+writable_paprika:
+  adapter: sqlite3
+  database: "/Users/jklein/Library/Group Containers/72KVKW69K8.com.hindsightlabs.paprika.mac.v3/Data/Database/Paprika.sqlite"
+
   # The specified database role being used to connect to PostgreSQL.
   # To create additional roles in PostgreSQL see `$ createuser --help`.
   # When left blank, PostgreSQL will use the default role. This is

@@ -1,0 +1,32 @@
+.container-fluid.py-4
+  .row
+    .col-12.mb-4
+      = link_to "← Back", root_path, class: "btn btn-sm btn-outline-secondary mb-3"
+      h1.display-5 Nutrition Tracking
+      p.text-muted Tell me what you ate today in plain English and I'll track the macros.
+
+  .row.justify-content-center
+    .col-lg-8
+      .card.shadow-sm.mb-4
+        .card-header.bg-warning
+          h2.h5.mb-0 #{@date.strftime('%A, %B %-d, %Y')}
+        .card-body
+          #nutrition_totals
+            = render partial: "totals", locals: { totals: @totals }
+
+      .card.shadow-sm.mb-4
+        .card-body
+          #nutrition_reply.mb-3
+            = render partial: "reply", locals: { reply: local_assigns[:reply] }
+
+          = form_with url: nutrition_log_path, method: :post, data: { turbo: true, controller: "reset-form", action: "turbo:submit-end->reset-form#reset" } do |f|
+            = f.hidden_field :date, value: @date.iso8601
+            .input-group
+              = f.text_field :message, placeholder: "e.g. 1/4 of the chicken tikka masala recipe and a banana", class: "form-control", autofocus: true, autocomplete: "off"
+              = f.submit "Log", class: "btn btn-warning"
+
+      .card.shadow-sm
+        .card-header
+          h2.h5.mb-0 Today's Log
+        #nutrition_log
+          = render partial: "entries", locals: { entries: @entries }
