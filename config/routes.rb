@@ -14,6 +14,9 @@ Rails.application.routes.draw do
 
   resources :home, only: [ :index ] do
     collection do
+      get :recipe_analysis
+      get :substitutions
+      get :meal_planning
       post :analyze_recipe
       post :suggest_substitutions
       post :suggest_meal_plan

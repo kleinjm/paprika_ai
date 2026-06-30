@@ -1,8 +1,15 @@
 class HomeController < ApplicationController
   def index
+  end
+
+  def recipe_analysis
     @recipes = Paprika::Recipe.all
-    # @chat_gpt = ChatGptService.new
-    @gemini = GeminiService.new
+  end
+
+  def substitutions
+  end
+
+  def meal_planning
     @meal_plan_form = MealPlanForm.new
   end
 

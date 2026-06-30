@@ -1,0 +1,24 @@
+- if flash[:notice]
+  .alert.alert-info = flash[:notice]
+
+.container-fluid.py-4
+  .row
+    .col-12.mb-4
+      = link_to "← Back", root_path, class: "btn btn-sm btn-outline-secondary mb-3"
+      h1.display-5 Recipe Analysis
+
+  .row
+    .col-12.mb-4
+      .card.shadow-sm
+        .card-header.bg-info.text-white
+          h2.h4.mb-0 Recipe Analysis
+        .card-body
+          .list-group
+            - @recipes.each do |recipe|
+              .list-group-item
+                h5.h6.mb-1 = recipe.name
+                - if recipe.recipe_categories.any?
+                  p.text-muted.small.mb-2 = recipe.recipe_categories.map(&:name).join(", ")
+                = button_to "Analyze", analyze_recipe_home_index_path(id: recipe.id), class: "btn btn-sm btn-outline-primary", data: { turbo: true }, id: "recipe_analysis_#{recipe.id}"
+
+  #recipe_analysis.mt-4
