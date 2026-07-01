@@ -57,9 +57,11 @@ class NutritionParser
     parse_json(raw)
   rescue StandardError => e
     Rails.logger.warn("NutritionParser API error: #{e.class}: #{e.message}") if defined?(Rails)
+    code = e.message[/\b\d{3}\b/]
+    detail = code ? " (error #{code})" : ""
     Result.new(
       entries: [],
-      reply: "The nutrition assistant is temporarily unavailable (the AI service may be busy). Please try again in a moment."
+      reply: "The nutrition assistant is temporarily unavailable#{detail} (the AI service may be busy). Please try again in a moment."
     )
   end
 

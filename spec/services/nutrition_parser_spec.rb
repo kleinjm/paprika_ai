@@ -89,12 +89,21 @@ RSpec.describe NutritionParser do
       expect(result.reply).to eq("Logged.")
     end
 
-    it "returns a friendly message when the AI service raises (e.g. 503)" do
-      allow(gemini).to receive(:generate_content).and_raise(StandardError, "status 503")
+    it "returns a friendly message including the error code when the AI service raises" do
+      allow(gemini).to receive(:generate_content).and_raise(StandardError, "the server responded with status 503")
 
       result = described_class.new(gemini: gemini).parse("x", recipes: [])
       expect(result.entries).to eq([])
       expect(result.reply).to include("temporarily unavailable")
+      expect(result.reply).to include("error 503")
+    end
+
+    it "omits the code when the error has no status number" do
+      allow(gemini).to receive(:generate_content).and_raise(StandardError, "connection reset")
+
+      result = described_class.new(gemini: gemini).parse("x", recipes: [])
+      expect(result.reply).to include("temporarily unavailable")
+      expect(result.reply).not_to match(/error \d/)
     end
   end
 end

@@ -32,7 +32,32 @@ class NutritionController < ApplicationController
     end
   end
 
+  def clear_day
+    @date = parse_date(params[:date])
+    NutritionEntry.for_day(@date).destroy_all
+    @reply = "Cleared the log for #{@date.strftime('%B %-d')}."
+    render_day_update
+  end
+
+  def destroy_entry
+    entry = NutritionEntry.find(params[:id])
+    @date = entry.logged_on
+    entry.destroy
+    @reply = "Removed \"#{entry.item}\"."
+    render_day_update
+  end
+
   private
+
+  def render_day_update
+    @entries = NutritionEntry.for_day(@date)
+    @totals = NutritionEntry.totals_for(@date)
+
+    respond_to do |format|
+      format.turbo_stream { render :log }
+      format.html { redirect_to nutrition_path(date: @date) }
+    end
+  end
 
   def parse_date(value)
     Date.parse(value.to_s)

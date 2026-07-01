@@ -14,6 +14,8 @@ Rails.application.routes.draw do
 
   get "nutrition" => "nutrition#show", as: :nutrition
   post "nutrition/log" => "nutrition#log", as: :nutrition_log
+  delete "nutrition/clear" => "nutrition#clear_day", as: :nutrition_clear
+  delete "nutrition/entries/:id" => "nutrition#destroy_entry", as: :nutrition_entry
 
   resources :home, only: [ :index ] do
     collection do

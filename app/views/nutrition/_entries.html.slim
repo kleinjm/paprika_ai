@@ -1,4 +1,6 @@
 - if entries.any?
+  .d-flex.justify-content-end.p-2
+    = button_to "Clear day", nutrition_clear_path(date: entries.first.logged_on), method: :delete, class: "btn btn-sm btn-outline-danger", form: { data: { turbo_confirm: "Delete ALL entries for this day?" } }
   .table-responsive
     table.table.table-sm.mb-0
       thead
@@ -8,6 +10,7 @@
           th.text-end Protein
           th.text-end Carbs
           th.text-end Fat
+          th
       tbody
         - entries.each do |entry|
           tr
@@ -19,5 +22,7 @@
             td.text-end = entry.protein.present? ? "#{entry.protein.to_f.round}g" : "—"
             td.text-end = entry.carbs.present? ? "#{entry.carbs.to_f.round}g" : "—"
             td.text-end = entry.fat.present? ? "#{entry.fat.to_f.round}g" : "—"
+            td.text-end
+              = button_to "✕", nutrition_entry_path(entry), method: :delete, class: "btn btn-sm btn-link text-danger p-0", form: { data: { turbo_confirm: "Delete this entry?" } }, aria: { label: "Delete entry" }
 - else
   .card-body.text-muted Nothing logged yet today.

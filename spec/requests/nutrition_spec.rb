@@ -82,6 +82,34 @@ RSpec.describe "Nutrition", type: :request do
       expect(response.body).to include("Tell me what you ate")
     end
 
+    context "deleting entries" do
+      let!(:entry) { NutritionEntry.create!(logged_on: Date.new(2026, 6, 29), item: "banana", calories: 100) }
+      let!(:other) { NutritionEntry.create!(logged_on: Date.new(2026, 6, 29), item: "eggs", calories: 150) }
+
+      it "removes a single entry and responds with a turbo stream" do
+        expect do
+          delete nutrition_entry_path(entry), as: :turbo_stream
+        end.to change(NutritionEntry, :count).by(-1)
+
+        expect(response.media_type).to eq("text/vnd.turbo-stream.html")
+        expect(NutritionEntry.exists?(entry.id)).to be(false)
+        expect(response.body).to include("Removed")
+      end
+
+      it "clears all entries for the day" do
+        expect do
+          delete nutrition_clear_path(date: "2026-06-29"), as: :turbo_stream
+        end.to change(NutritionEntry, :count).by(-2)
+
+        expect(response.body).to include("Cleared the log")
+      end
+
+      it "redirects for an HTML request" do
+        delete nutrition_entry_path(entry)
+        expect(response).to redirect_to(nutrition_path(date: Date.new(2026, 6, 29)))
+      end
+    end
+
     context "when items match selected recipes" do
       let(:chili) do
         instance_double(Paprika::Recipe, id: 42, name: "Chili", nutritional_info: "Calories: 999")
