@@ -30,6 +30,19 @@ RSpec.describe NutritionEntry do
     end
   end
 
+  describe "#recipes" do
+    it "loads the linked Paprika recipes by their ids" do
+      entry = described_class.create!(logged_on: Date.current, item: "chili")
+      entry.nutrition_entry_recipes.create!(recipe_id: 42)
+      entry.nutrition_entry_recipes.create!(recipe_id: 7)
+
+      relation = double("Relation")
+      expect(Paprika::Recipe).to receive(:where).with(Z_PK: [ 42, 7 ]).and_return(relation)
+
+      expect(entry.recipes).to eq(relation)
+    end
+  end
+
   describe ".for_day" do
     it "returns only entries logged on the given date, oldest first" do
       today = Date.new(2026, 6, 29)

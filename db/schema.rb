@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_06_29_000001) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_01_000002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -27,4 +27,15 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_29_000001) do
     t.datetime "updated_at", null: false
     t.index ["logged_on"], name: "index_nutrition_entries_on_logged_on"
   end
+
+  create_table "nutrition_entry_recipes", force: :cascade do |t|
+    t.bigint "nutrition_entry_id", null: false
+    t.integer "recipe_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["nutrition_entry_id", "recipe_id"], name: "index_entry_recipes_on_entry_and_recipe", unique: true
+    t.index ["nutrition_entry_id"], name: "index_nutrition_entry_recipes_on_nutrition_entry_id"
+  end
+
+  add_foreign_key "nutrition_entry_recipes", "nutrition_entries"
 end

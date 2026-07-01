@@ -26,6 +26,7 @@ module Paprika
   class Meal < ApplicationRecord
     self.table_name = "ZMEAL"
     belongs_to :meal_type, class_name: "Paprika::MealType", foreign_key: "ZMEALTYPE", optional: true
+    belongs_to :recipe, class_name: "Paprika::Recipe", foreign_key: "ZRECIPE", optional: true
 
     # Paprika stores ZDATE as a Core Data (Cocoa) timestamp: seconds since
     # 2001-01-01, pinned to local midnight of the scheduled day.

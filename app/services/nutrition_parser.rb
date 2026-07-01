@@ -10,6 +10,10 @@ class NutritionParser
     calories and protein are the highest priorities. The user will tell you in
     plain English what they ate. Convert it into structured macros.
 
+    A single message may describe several foods (e.g. "small bowl bean salad
+    medium plate chicken breast"). Split it into one entry per distinct food,
+    and match each entry independently against the reference recipes.
+
     Two logging modes:
     - HOME COOKING: If they reference one of their master recipes (possibly as a
       fraction or serving, e.g. "1/4 of the chili"), compute the BATCH macros for
@@ -30,15 +34,17 @@ class NutritionParser
         {
           "item": "short description of what was eaten",
           "calories": int, "protein": int, "carbs": int, "fat": int,
-          "recipe_match": "exact master recipe name or null",
+          "recipe_id": int (the "id" of the matched recipe from the reference list) or null,
           "batch_macros": { "calories": int, "protein": int, "carbs": int, "fat": int } or null
         }
       ],
       "reply": "a short friendly confirmation of what you logged and the day's running totals"
     }
 
-    Only include "recipe_match" and "batch_macros" for HOME COOKING items that
-    matched a master recipe. Round all numbers to integers.
+    Only set "recipe_id" and "batch_macros" for HOME COOKING items that matched
+    one of the provided reference recipes; use the recipe's exact "id". For
+    anything not in the reference list, set both to null. Round all numbers to
+    integers.
   PROMPT
 
   def initialize(gemini: GeminiService.new)
@@ -49,6 +55,12 @@ class NutritionParser
     prompt = build_prompt(message, recipes)
     raw = @gemini.generate_content(prompt: prompt)
     parse_json(raw)
+  rescue StandardError => e
+    Rails.logger.warn("NutritionParser API error: #{e.class}: #{e.message}") if defined?(Rails)
+    Result.new(
+      entries: [],
+      reply: "The nutrition assistant is temporarily unavailable (the AI service may be busy). Please try again in a moment."
+    )
   end
 
   private
@@ -56,17 +68,24 @@ class NutritionParser
   def build_prompt(message, recipes)
     reference = recipes.map do |r|
       {
+        id: r.id,
         name: r.name,
         nutritional_info: r.nutritional_info.presence,
         ingredients: r.ingredients
       }
     end
 
+    reference_section =
+      if reference.any?
+        "Here are the reference recipes the user may be describing (JSON):\n#{reference.to_json}"
+      else
+        "No specific reference recipes were provided; treat everything as EATING OUT."
+      end
+
     <<~TEXT
       #{SYSTEM_PROMPT}
 
-      Here are the user's master recipes for reference (JSON):
-      #{reference.to_json}
+      #{reference_section}
 
       The user ate:
       #{message}
@@ -75,12 +94,14 @@ class NutritionParser
 
   def parse_json(raw)
     json = raw.to_s.strip.sub(/\A```(?:json)?/, "").sub(/```\z/, "").strip
+    # Tolerate trailing commas the model sometimes emits before a closing } or ].
+    json = json.gsub(/,(\s*[}\]])/, '\1')
     data = JSON.parse(json)
     Result.new(
       entries: Array(data["entries"]),
       reply: data["reply"].presence || "Logged."
     )
   rescue JSON::ParserError
-    Result.new(entries: [], reply: raw.to_s)
+    Result.new(entries: [], reply: "Sorry, I couldn't read that. Please try rephrasing what you ate.")
   end
 end

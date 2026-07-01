@@ -1,11 +1,14 @@
 require "rails_helper"
 
 RSpec.describe "Nutrition", type: :request do
-  before do
-    # Avoid touching the real Paprika SQLite database in tests.
-    allow(Paprika::Recipe).to receive(:where).and_return([])
-    allow(Paprika::Meal).to receive(:scheduled_between).and_return([])
+  # Keep the specs off the read-only Paprika SQLite DB by stubbing the Paprika
+  # query methods the controller uses, while letting the real controller logic run.
+  def stub_paprika(scheduled_meals: [], other_recipes: [])
+    allow(Paprika::Meal).to receive(:scheduled_between).and_return(scheduled_meals)
+    allow(Paprika::Recipe).to receive(:not_trashed_excluding).and_return(other_recipes)
   end
+
+  before { stub_paprika }
 
   describe "GET /nutrition" do
     it "renders the tracking page for today" do
@@ -14,14 +17,26 @@ RSpec.describe "Nutrition", type: :request do
       expect(response.body).to include("Nutrition Tracking")
     end
 
-    it "renders a clickable pill for each scheduled meal" do
-      meal = double("Meal", title: "Instant Pot Stuffed Pepper Soup")
-      allow(Paprika::Meal).to receive(:scheduled_between).and_return([meal])
+    it "renders a clickable pill (with recipe id) only for meals that have a recipe" do
+      with_recipe = double("Meal", title: "Instant Pot Stuffed Pepper Soup", recipe: double(id: 521))
+      without_recipe = double("Meal", title: "Freeform note", recipe: nil)
+      stub_paprika(scheduled_meals: [ with_recipe, without_recipe ])
 
       get nutrition_path
 
       expect(response.body).to include("Instant Pot Stuffed Pepper Soup")
       expect(response.body).to include("meal-picker#fill")
+      expect(response.body).to include("521")
+      expect(response.body).not_to include("Freeform note")
+    end
+
+    it "renders a dropdown option for each other recipe" do
+      stub_paprika(other_recipes: [ double(id: 7, name: "Zuppa Toscana") ])
+
+      get nutrition_path
+
+      expect(response.body).to include("Zuppa Toscana")
+      expect(response.body).to include("meal-picker#pick")
     end
   end
 
@@ -30,7 +45,7 @@ RSpec.describe "Nutrition", type: :request do
       NutritionParser::Result.new(
         entries: [
           { "item" => "banana", "calories" => 100, "protein" => 1, "carbs" => 27, "fat" => 0,
-            "recipe_match" => nil, "batch_macros" => nil }
+            "recipe_id" => nil, "batch_macros" => nil }
         ],
         reply: "Logged a banana."
       )
@@ -54,6 +69,7 @@ RSpec.describe "Nutrition", type: :request do
       entry = NutritionEntry.last
       expect(entry.item).to eq("banana")
       expect(entry.logged_on).to eq(Date.new(2026, 6, 29))
+      expect(entry.nutrition_entry_recipes).to be_empty
     end
 
     it "does not call the parser or create entries for a blank message" do
@@ -66,27 +82,68 @@ RSpec.describe "Nutrition", type: :request do
       expect(response.body).to include("Tell me what you ate")
     end
 
-    context "when an entry matches a recipe with existing nutrition info" do
-      let(:recipe) { instance_double(Paprika::Recipe, nutritional_info: "Calories: 999") }
+    context "when items match selected recipes" do
+      let(:chili) do
+        instance_double(Paprika::Recipe, id: 42, name: "Chili", nutritional_info: "Calories: 999")
+      end
+      let(:salad) do
+        instance_double(Paprika::Recipe, id: 7, name: "Bean Salad", nutritional_info: nil)
+      end
       let(:result) do
         NutritionParser::Result.new(
           entries: [
-            { "item" => "1/4 chili", "calories" => 600, "protein" => 45, "carbs" => 30, "fat" => 20,
-              "recipe_match" => "Chili",
-              "batch_macros" => { "calories" => 2400, "protein" => 180, "carbs" => 120, "fat" => 80 } }
+            { "item" => "medium bowl chili", "calories" => 600, "protein" => 45, "carbs" => 30, "fat" => 20,
+              "recipe_id" => 42,
+              "batch_macros" => { "calories" => 2400, "protein" => 180, "carbs" => 120, "fat" => 80 } },
+            { "item" => "small bowl bean salad", "calories" => 200, "protein" => 8, "carbs" => 25, "fat" => 6,
+              "recipe_id" => 7,
+              "batch_macros" => { "calories" => 800, "protein" => 32, "carbs" => 100, "fat" => 24 } }
           ],
-          reply: "Logged it."
+          reply: "Logged both."
         )
       end
 
-      it "overwrites the recipe nutrition with the standardized batch macros" do
-        allow(Paprika::Recipe).to receive(:find_by).with(ZNAME: "Chili").and_return(recipe)
+      before do
+        allow(Paprika::Recipe).to receive(:where).with(Z_PK: [ 42, 7 ]).and_return([ chili, salad ])
+        allow(chili).to receive(:update_nutritional_info!)
+        allow(salad).to receive(:update_nutritional_info!)
+      end
 
-        expect(recipe).to receive(:update_nutritional_info!).with(
+      it "creates one entry per item, each linked to its recipe" do
+        expect do
+          post nutrition_log_path, params: { message: "medium bowl chili small bowl bean salad", recipe_ids: [ 42, 7 ] },
+                                   as: :turbo_stream
+        end.to change(NutritionEntry, :count).by(2)
+          .and change(NutritionEntryRecipe, :count).by(2)
+
+        chili_entry = NutritionEntry.find_by(item: "medium bowl chili")
+        expect(chili_entry.recipe_match).to eq("Chili")
+        expect(chili_entry.nutrition_entry_recipes.pluck(:recipe_id)).to eq([ 42 ])
+      end
+
+      it "standardizes each matched recipe's nutrition" do
+        expect(chili).to receive(:update_nutritional_info!).with(
           "Batch total | Calories: 2400 kcal | Protein: 180 g | Carbohydrates: 120 g | Fat: 80 g"
         )
+        expect(salad).to receive(:update_nutritional_info!).with(
+          "Batch total | Calories: 800 kcal | Protein: 32 g | Carbohydrates: 100 g | Fat: 24 g"
+        )
 
-        post nutrition_log_path, params: { message: "1/4 chili" }, as: :turbo_stream
+        post nutrition_log_path, params: { message: "chili and salad", recipe_ids: [ 42, 7 ] },
+                                 as: :turbo_stream
+      end
+
+      it "still logs the entry when writing back to Paprika fails" do
+        allow(chili).to receive(:update_nutritional_info!).and_raise(StandardError, "db locked")
+        allow(salad).to receive(:update_nutritional_info!)
+        allow(Rails.logger).to receive(:warn)
+
+        expect do
+          post nutrition_log_path, params: { message: "chili and salad", recipe_ids: [ 42, 7 ] },
+                                   as: :turbo_stream
+        end.to change(NutritionEntry, :count).by(2)
+
+        expect(Rails.logger).to have_received(:warn).with(/Failed to write batch macros for Chili/)
       end
     end
   end

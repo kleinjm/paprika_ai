@@ -19,10 +19,18 @@
 #  index_nutrition_entries_on_logged_on  (logged_on)
 #
 class NutritionEntry < ApplicationRecord
+  has_many :nutrition_entry_recipes, dependent: :destroy
+
   validates :item, presence: true
   validates :logged_on, presence: true
 
   scope :for_day, ->(date) { where(logged_on: date).order(:created_at) }
+
+  # The matched Paprika recipes live in the read-only Paprika database, so they
+  # are loaded manually rather than through an Active Record association.
+  def recipes
+    Paprika::Recipe.where(Z_PK: nutrition_entry_recipes.pluck(:recipe_id))
+  end
 
   def self.totals_for(date)
     where(logged_on: date).pick(

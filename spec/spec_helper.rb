@@ -5,7 +5,7 @@ SimpleCov.start do
   add_filter "/db/"
   add_filter "/app/models/paprika/"
   add_filter "/app/services/chat_gpt_service.rb"
-  minimum_coverage 80
+  minimum_coverage 100
 end
 
 RSpec.configure do |config|

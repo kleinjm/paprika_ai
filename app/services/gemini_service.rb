@@ -7,7 +7,7 @@ class GeminiService
         service: "generative-language-api",
         api_key: ENV["GEMINI_API_KEY"]
       },
-      options: { model: "gemini-2.0-flash" }
+      options: { model: "gemini-2.5-flash-lite" }
     )
   end
 
