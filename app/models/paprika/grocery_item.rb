@@ -1,30 +1,30 @@
-# Schema Information
+# == Schema Information
 #
 # Table name: ZGROCERYITEM
 #
-#  Z_PK          :integer          primary key
-#  Z_ENT         :integer
-#  Z_OPT         :integer
-#  ZISSYNCED     :integer
-#  ZORDERFLAG    :integer
-#  ZPURCHASED    :integer
-#  ZSEPARATE     :integer
-#  ZAISLE        :integer
-#  ZLIST         :integer
-#  ZAISLENAME    :string
-#  ZINGREDIENT   :string
-#  ZINSTRUCTION  :string
-#  ZNAME         :string
-#  ZQUANTITY     :string
-#  ZRECIPENAME   :string
-#  ZSTATUS       :string
-#  ZUID          :string
+#  ZAISLE       :integer
+#  ZAISLENAME   :string
+#  ZINGREDIENT  :string
+#  ZINSTRUCTION :string
+#  ZISSYNCED    :integer
+#  ZLIST        :integer
+#  ZNAME        :string
+#  ZORDERFLAG   :integer
+#  ZPURCHASED   :integer
+#  ZQUANTITY    :string
+#  ZRECIPENAME  :string
+#  ZSEPARATE    :integer
+#  ZSTATUS      :string
+#  ZUID         :string
+#  Z_ENT        :integer
+#  Z_OPT        :integer
+#  Z_PK         :integer          primary key
 #
 # Indexes
 #
-#  Z_GroceryItem_byUidIndex  (ZUID)
-#  ZGROCERYITEM_ZAISLE_INDEX (ZAISLE)
-#  ZGROCERYITEM_ZLIST_INDEX  (ZLIST)
+#  ZGROCERYITEM_ZAISLE_INDEX  (ZAISLE)
+#  ZGROCERYITEM_ZLIST_INDEX   (ZLIST)
+#  Z_GroceryItem_byUidIndex   (ZUID)
 #
 module Paprika
   class GroceryItem < ApplicationRecord

@@ -1,26 +1,26 @@
-# Schema Information
+# == Schema Information
 #
 # Table name: ZPANTRYITEM
 #
-#  Z_PK              :integer          primary key
-#  Z_ENT             :integer
-#  Z_OPT             :integer
-#  ZHASEXPIRATION    :integer
-#  ZINSTOCK          :integer
-#  ZISSYNCED         :integer
-#  ZAISLE            :integer
-#  ZEXPIRATIONDATE   :timestamp
-#  ZPURCHASEDATE     :timestamp
-#  ZAISLENAME        :string
-#  ZINGREDIENT       :string
-#  ZQUANTITY         :string
-#  ZSTATUS           :string
-#  ZUID              :string
+#  ZAISLE          :integer
+#  ZAISLENAME      :string
+#  ZEXPIRATIONDATE :datetime
+#  ZHASEXPIRATION  :integer
+#  ZINGREDIENT     :string
+#  ZINSTOCK        :integer
+#  ZISSYNCED       :integer
+#  ZPURCHASEDATE   :datetime
+#  ZQUANTITY       :string
+#  ZSTATUS         :string
+#  ZUID            :string
+#  Z_ENT           :integer
+#  Z_OPT           :integer
+#  Z_PK            :integer          primary key
 #
 # Indexes
 #
-#  Z_PantryItem_byUidIndex  (ZUID)
-#  ZPANTRYITEM_ZAISLE_INDEX (ZAISLE)
+#  ZPANTRYITEM_ZAISLE_INDEX  (ZAISLE)
+#  Z_PantryItem_byUidIndex   (ZUID)
 #
 module Paprika
   class PantryItem < ApplicationRecord

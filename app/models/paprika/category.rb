@@ -1,16 +1,15 @@
-# Schema Information
+# This table is the join table for recipes and categories.
+# == Schema Information
 #
 # Table name: Z_12CATEGORIES
 #
-#  Z_12RECIPES    :integer
-#  Z_13CATEGORIES :integer
+#  Z_12RECIPES    :integer          primary key
+#  Z_13CATEGORIES :integer          primary key
 #
 # Indexes
 #
-#  Z_12CATEGORIES_Z_13CATEGORIES_INDEX  (Z_13CATEGORIES, Z_12RECIPES)
+#  Z_12CATEGORIES_Z_13CATEGORIES_INDEX  (Z_13CATEGORIES,Z_12RECIPES)
 #
-
-# This table is the join table for recipes and categories.
 module Paprika
   class Category < ApplicationRecord
     self.table_name = "Z_12CATEGORIES"

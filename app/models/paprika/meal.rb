@@ -1,26 +1,26 @@
-# Schema Information
+# == Schema Information
 #
 # Table name: ZMEAL
 #
-#  Z_PK            :integer          primary key
-#  Z_ENT           :integer
-#  Z_OPT           :integer
-#  ZISSYNCED       :integer
-#  ZORDERFLAG      :integer
-#  ZORIGINALTYPE   :integer
-#  ZRECIPE         :integer
-#  ZTYPE           :integer
-#  ZDATE           :timestamp
-#  ZNAME           :string
-#  ZSTATUS         :string
-#  ZUID            :string
+#  ZDATE         :datetime
+#  ZISSYNCED     :integer
+#  ZNAME         :string
+#  ZORDERFLAG    :integer
+#  ZORIGINALTYPE :integer
+#  ZRECIPE       :integer
+#  ZSTATUS       :string
+#  ZTYPE         :integer
+#  ZUID          :string
+#  Z_ENT         :integer
+#  Z_OPT         :integer
+#  Z_PK          :integer          primary key
 #
 # Indexes
 #
-#  Z_Meal_byDateIndex  (ZDATE)
-#  Z_Meal_byUidIndex   (ZUID)
-#  ZMEAL_ZRECIPE_INDEX (ZRECIPE)
-#  ZMEAL_ZTYPE_INDEX   (ZTYPE)
+#  ZMEAL_ZRECIPE_INDEX  (ZRECIPE)
+#  ZMEAL_ZTYPE_INDEX    (ZTYPE)
+#  Z_Meal_byDateIndex   (ZDATE)
+#  Z_Meal_byUidIndex    (ZUID)
 #
 module Paprika
   class Meal < ApplicationRecord

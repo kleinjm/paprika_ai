@@ -1,17 +1,17 @@
-# Schema Information
+# == Schema Information
 #
 # Table name: ZGROCERYLIST
 #
-#  Z_PK            :integer          primary key
-#  Z_ENT           :integer
-#  Z_OPT           :integer
-#  ZISDEFAULT      :integer
-#  ZISSYNCED       :integer
-#  ZORDERFLAG      :integer
-#  ZNAME           :string
-#  ZREMINDERSLIST  :string
-#  ZSTATUS         :string
-#  ZUID            :string
+#  ZISDEFAULT     :integer
+#  ZISSYNCED      :integer
+#  ZNAME          :string
+#  ZORDERFLAG     :integer
+#  ZREMINDERSLIST :string
+#  ZSTATUS        :string
+#  ZUID           :string
+#  Z_ENT          :integer
+#  Z_OPT          :integer
+#  Z_PK           :integer          primary key
 #
 # Indexes
 #

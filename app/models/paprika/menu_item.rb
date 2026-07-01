@@ -1,27 +1,27 @@
-# Schema Information
+# == Schema Information
 #
 # Table name: ZMENUITEM
 #
-#  Z_PK        :integer          primary key
-#  Z_ENT       :integer
-#  Z_OPT       :integer
-#  ZDAY        :integer
-#  ZISSYNCED   :integer
-#  ZORDERFLAG  :integer
-#  ZMENU       :integer
-#  ZRECIPE     :integer
-#  ZTYPE       :integer
-#  ZNAME       :string
-#  ZSTATUS     :string
-#  ZUID        :string
+#  ZDAY       :integer
+#  ZISSYNCED  :integer
+#  ZMENU      :integer
+#  ZNAME      :string
+#  ZORDERFLAG :integer
+#  ZRECIPE    :integer
+#  ZSTATUS    :string
+#  ZTYPE      :integer
+#  ZUID       :string
+#  Z_ENT      :integer
+#  Z_OPT      :integer
+#  Z_PK       :integer          primary key
 #
 # Indexes
 #
-#  Z_MenuItem_byUidIndex  (ZUID)
-#  ZMENUITEM_ZMENU_INDEX  (ZMENU)
-#  ZMENUITEM_ZRECIPE_INDEX (ZRECIPE)
-#  ZMENUITEM_ZTYPE_INDEX  (ZTYPE)
-
+#  ZMENUITEM_ZMENU_INDEX    (ZMENU)
+#  ZMENUITEM_ZRECIPE_INDEX  (ZRECIPE)
+#  ZMENUITEM_ZTYPE_INDEX    (ZTYPE)
+#  Z_MenuItem_byUidIndex    (ZUID)
+#
 module Paprika
   class MenuItem < ApplicationRecord
     self.table_name = "ZMENUITEM"

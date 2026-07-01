@@ -1,20 +1,20 @@
-# Schema Information
+# == Schema Information
 #
 # Table name: ZMEALTYPE
 #
-#  Z_PK            :integer          primary key
-#  Z_ENT           :integer
-#  Z_OPT           :integer
-#  ZEXPORTALLDAY   :integer
-#  ZISSYNCED       :integer
-#  ZORDERFLAG      :integer
-#  ZORIGINALTYPE   :integer
-#  ZEXPORTTIME     :float
-#  ZLASTUSED       :timestamp
-#  ZCOLOR          :string
-#  ZNAME           :string
-#  ZSTATUS         :string
-#  ZUID            :string
+#  ZCOLOR        :string
+#  ZEXPORTALLDAY :integer
+#  ZEXPORTTIME   :float
+#  ZISSYNCED     :integer
+#  ZLASTUSED     :datetime
+#  ZNAME         :string
+#  ZORDERFLAG    :integer
+#  ZORIGINALTYPE :integer
+#  ZSTATUS       :string
+#  ZUID          :string
+#  Z_ENT         :integer
+#  Z_OPT         :integer
+#  Z_PK          :integer          primary key
 #
 # Indexes
 #

@@ -1,12 +1,12 @@
-# Schema Information
+# == Schema Information
 #
 # Table name: ZSYNCSTATUS
 #
-#  Z_PK       :integer          primary key
-#  Z_ENT      :integer
-#  Z_OPT      :integer
-#  ZREVISION  :integer
-#  ZNAME      :string
+#  ZNAME     :string
+#  ZREVISION :integer
+#  Z_ENT     :integer
+#  Z_OPT     :integer
+#  Z_PK      :integer          primary key
 #
 module Paprika
   class SyncStatus < ApplicationRecord

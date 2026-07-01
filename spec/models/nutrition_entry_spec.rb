@@ -1,5 +1,25 @@
 require "rails_helper"
 
+# == Schema Information
+#
+# Table name: nutrition_entries
+#
+#  id           :bigint           not null, primary key
+#  calories     :integer
+#  carbs        :decimal(6, 1)
+#  fat          :decimal(6, 1)
+#  item         :string           not null
+#  logged_on    :date             not null
+#  protein      :decimal(6, 1)
+#  raw_input    :text
+#  recipe_match :string
+#  created_at   :datetime         not null
+#  updated_at   :datetime         not null
+#
+# Indexes
+#
+#  index_nutrition_entries_on_logged_on  (logged_on)
+#
 RSpec.describe NutritionEntry do
   describe "validations" do
     it "requires an item and a logged_on date" do

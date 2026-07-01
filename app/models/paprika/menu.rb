@@ -1,17 +1,17 @@
-# Schema Information
+# == Schema Information
 #
 # Table name: ZMENU
 #
-#  Z_PK        :integer          primary key
-#  Z_ENT       :integer
-#  Z_OPT       :integer
-#  ZDAYS       :integer
-#  ZISSYNCED   :integer
-#  ZORDERFLAG  :integer
-#  ZNAME       :string
-#  ZNOTES      :string
-#  ZSTATUS     :string
-#  ZUID        :string
+#  ZDAYS      :integer
+#  ZISSYNCED  :integer
+#  ZNAME      :string
+#  ZNOTES     :string
+#  ZORDERFLAG :integer
+#  ZSTATUS    :string
+#  ZUID       :string
+#  Z_ENT      :integer
+#  Z_OPT      :integer
+#  Z_PK       :integer          primary key
 #
 # Indexes
 #

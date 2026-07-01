@@ -1,24 +1,23 @@
-# Schema Information
+# This table is the actual category for a recipe.
+# == Schema Information
 #
 # Table name: ZRECIPECATEGORY
 #
-#  Z_PK        :integer          primary key
-#  Z_ENT       :integer
-#  Z_OPT       :integer
-#  ZISSYNCED   :integer
-#  ZORDERFLAG  :integer
-#  ZPARENT     :integer
-#  ZNAME       :string
-#  ZSTATUS     :string
-#  ZUID        :string
+#  ZISSYNCED  :integer
+#  ZNAME      :string
+#  ZORDERFLAG :integer
+#  ZPARENT    :integer
+#  ZSTATUS    :string
+#  ZUID       :string
+#  Z_ENT      :integer
+#  Z_OPT      :integer
+#  Z_PK       :integer          primary key
 #
 # Indexes
 #
-#  Z_RecipeCategory_byUidIndex  (ZUID)
-#  ZRECIPECATEGORY_ZPARENT_INDEX (ZPARENT)
+#  ZRECIPECATEGORY_ZPARENT_INDEX  (ZPARENT)
+#  Z_RecipeCategory_byUidIndex    (ZUID)
 #
-
-# This table is the actual category for a recipe.
 module Paprika
   class RecipeCategory < ApplicationRecord
     self.table_name = "ZRECIPECATEGORY"

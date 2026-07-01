@@ -1,31 +1,28 @@
-# Schema Information
+# == Schema Information
 #
 # Table name: ZRECIPE
 #
-#  Z_PK                  :integer          primary key
-#  Z_ENT                 :integer
-#  Z_OPT                 :integer
-#  ZINTRASH             :integer
-#  ZISPINNED            :integer
-#  ZISSYNCED            :integer
-#  ZONFAVORITES         :integer
-#  ZPHOTOISDOWNLOADED   :integer
-#  ZPHOTOISUPLOADED     :integer
-#  ZRATING              :integer
-#  ZCREATED             :timestamp
 #  ZCOOKTIME            :string
+#  ZCREATED             :datetime
 #  ZDESCRIPTIONTEXT     :string
 #  ZDIFFICULTY          :string
 #  ZDIRECTIONS          :string
 #  ZIMAGEURL            :string
 #  ZINGREDIENTS         :string
+#  ZINTRASH             :integer
+#  ZISPINNED            :integer
+#  ZISSYNCED            :integer
 #  ZNAME                :string
 #  ZNOTES               :string
 #  ZNUTRITIONALINFO     :string
+#  ZONFAVORITES         :integer
 #  ZPHOTO               :string
 #  ZPHOTOHASH           :string
+#  ZPHOTOISDOWNLOADED   :integer
+#  ZPHOTOISUPLOADED     :integer
 #  ZPHOTOLARGE          :string
 #  ZPREPTIME            :string
+#  ZRATING              :integer
 #  ZSCALE               :string
 #  ZSELECTEDDIRECTION   :string
 #  ZSELECTEDINGREDIENTS :string
@@ -36,6 +33,9 @@
 #  ZSYNCHASH            :string
 #  ZTOTALTIME           :string
 #  ZUID                 :string
+#  Z_ENT                :integer
+#  Z_OPT                :integer
+#  Z_PK                 :integer          primary key
 #
 # Indexes
 #
