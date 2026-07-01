@@ -11,3 +11,11 @@
   .col
     .h3.mb-0 = "#{totals[:fat].to_f.round}g"
     .text-muted.small Fat
+
+.row.text-center.text-muted.small.mt-2
+  .col
+    | Fiber #{totals[:fiber].to_f.round}g
+  .col
+    | Sat Fat #{totals[:saturated_fat].to_f.round}g
+  .col
+    | Sugar #{totals[:sugar].to_f.round}g

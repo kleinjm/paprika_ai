@@ -100,6 +100,9 @@ class NutritionController < ApplicationController
         protein: entry["protein"],
         carbs: entry["carbs"],
         fat: entry["fat"],
+        fiber: entry["fiber"],
+        saturated_fat: entry["saturated_fat"],
+        sugar: entry["sugar"],
         recipe_match: recipe&.name
       )
 
@@ -111,21 +114,17 @@ class NutritionController < ApplicationController
   end
 
   # Overwrite the matched recipe's nutrition field with the AI's validated batch
-  # macros in one canonical format, standardizing (and correcting) it on every run.
+  # macros in the current versioned format, standardizing (and backfilling) it —
+  # unless the skill is in read-only mode.
   def write_batch_macros(recipe, batch)
+    return unless NutritionSkill.write_enabled?
     return if batch.blank?
 
-    standardized = standardized_nutrition(batch)
-    return if standardized == recipe.nutritional_info
+    standardized = NutritionSkill.format(batch)
+    return if standardized == recipe.nutritional_info.to_s.strip
 
     recipe.update_nutritional_info!(standardized)
   rescue StandardError => e
     Rails.logger.warn("Failed to write batch macros for #{recipe.name}: #{e.message}")
-  end
-
-  def standardized_nutrition(batch)
-    "Batch total | Calories: #{batch['calories'].to_i} kcal | " \
-    "Protein: #{batch['protein'].to_i} g | Carbohydrates: #{batch['carbs'].to_i} g | " \
-    "Fat: #{batch['fat'].to_i} g"
   end
 end

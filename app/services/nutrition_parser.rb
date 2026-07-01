@@ -34,12 +34,16 @@ class NutritionParser
         {
           "item": "short description of what was eaten",
           "calories": int, "protein": int, "carbs": int, "fat": int,
+          "fiber": int, "saturated_fat": int, "sugar": int,
           "recipe_id": int (the "id" of the matched recipe from the reference list) or null,
           "batch_macros": { "calories": int, "protein": int, "carbs": int, "fat": int } or null
         }
       ],
       "reply": "a short friendly confirmation of what you logged and the day's running totals"
     }
+
+    All per-entry nutrient fields (calories in kcal; protein, carbs, fat, fiber,
+    saturated_fat, sugar in grams) are for the PORTION the user actually ate.
 
     Only set "recipe_id" and "batch_macros" for HOME COOKING items that matched
     one of the provided reference recipes; use the recipe's exact "id". For

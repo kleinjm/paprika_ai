@@ -2,17 +2,20 @@
 #
 # Table name: nutrition_entries
 #
-#  id           :bigint           not null, primary key
-#  calories     :integer
-#  carbs        :decimal(6, 1)
-#  fat          :decimal(6, 1)
-#  item         :string           not null
-#  logged_on    :date             not null
-#  protein      :decimal(6, 1)
-#  raw_input    :text
-#  recipe_match :string
-#  created_at   :datetime         not null
-#  updated_at   :datetime         not null
+#  id            :bigint           not null, primary key
+#  calories      :integer
+#  carbs         :decimal(6, 1)
+#  fat           :decimal(6, 1)
+#  fiber         :decimal(6, 1)
+#  item          :string           not null
+#  logged_on     :date             not null
+#  protein       :decimal(6, 1)
+#  raw_input     :text
+#  recipe_match  :string
+#  saturated_fat :decimal(6, 1)
+#  sugar         :decimal(6, 1)
+#  created_at    :datetime         not null
+#  updated_at    :datetime         not null
 #
 # Indexes
 #
@@ -32,12 +35,12 @@ class NutritionEntry < ApplicationRecord
     Paprika::Recipe.where(Z_PK: nutrition_entry_recipes.pluck(:recipe_id))
   end
 
+  TOTALED_COLUMNS = %i[calories protein carbs fat fiber saturated_fat sugar].freeze
+
   def self.totals_for(date)
-    where(logged_on: date).pick(
-      Arel.sql("COALESCE(SUM(calories),0)"),
-      Arel.sql("COALESCE(SUM(protein),0)"),
-      Arel.sql("COALESCE(SUM(carbs),0)"),
-      Arel.sql("COALESCE(SUM(fat),0)")
-    ).then { |c, p, cb, f| { calories: c, protein: p, carbs: cb, fat: f } }
+    sums = where(logged_on: date).pick(
+      *TOTALED_COLUMNS.map { |col| Arel.sql("COALESCE(SUM(#{col}),0)") }
+    )
+    TOTALED_COLUMNS.zip(Array(sums)).to_h
   end
 end

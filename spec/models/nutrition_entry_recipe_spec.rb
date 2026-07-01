@@ -1,5 +1,24 @@
 require "rails_helper"
 
+# == Schema Information
+#
+# Table name: nutrition_entry_recipes
+#
+#  id                 :bigint           not null, primary key
+#  created_at         :datetime         not null
+#  updated_at         :datetime         not null
+#  nutrition_entry_id :bigint           not null
+#  recipe_id          :integer          not null
+#
+# Indexes
+#
+#  index_entry_recipes_on_entry_and_recipe              (nutrition_entry_id,recipe_id) UNIQUE
+#  index_nutrition_entry_recipes_on_nutrition_entry_id  (nutrition_entry_id)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (nutrition_entry_id => nutrition_entries.id)
+#
 RSpec.describe NutritionEntryRecipe do
   let(:entry) { NutritionEntry.create!(logged_on: Date.current, item: "chili") }
 

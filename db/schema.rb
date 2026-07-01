@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_01_000002) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_01_000003) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -25,6 +25,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_01_000002) do
     t.string "recipe_match"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.decimal "fiber", precision: 6, scale: 1
+    t.decimal "saturated_fat", precision: 6, scale: 1
+    t.decimal "sugar", precision: 6, scale: 1
     t.index ["logged_on"], name: "index_nutrition_entries_on_logged_on"
   end
 

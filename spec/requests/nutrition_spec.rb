@@ -121,6 +121,7 @@ RSpec.describe "Nutrition", type: :request do
         NutritionParser::Result.new(
           entries: [
             { "item" => "medium bowl chili", "calories" => 600, "protein" => 45, "carbs" => 30, "fat" => 20,
+              "fiber" => 12, "saturated_fat" => 6, "sugar" => 5,
               "recipe_id" => 42,
               "batch_macros" => { "calories" => 2400, "protein" => 180, "carbs" => 120, "fat" => 80 } },
             { "item" => "small bowl bean salad", "calories" => 200, "protein" => 8, "carbs" => 25, "fat" => 6,
@@ -146,16 +147,28 @@ RSpec.describe "Nutrition", type: :request do
 
         chili_entry = NutritionEntry.find_by(item: "medium bowl chili")
         expect(chili_entry.recipe_match).to eq("Chili")
+        expect(chili_entry.fiber).to eq(12)
+        expect(chili_entry.saturated_fat).to eq(6)
+        expect(chili_entry.sugar).to eq(5)
         expect(chili_entry.nutrition_entry_recipes.pluck(:recipe_id)).to eq([ 42 ])
       end
 
       it "standardizes each matched recipe's nutrition" do
         expect(chili).to receive(:update_nutritional_info!).with(
-          "Batch total | Calories: 2400 kcal | Protein: 180 g | Carbohydrates: 120 g | Fat: 80 g"
+          "Meal Total (AI Generated - 7/1/26)\nCalories: 2400 kcal\nProtein: 180 g\nCarbohydrates: 120 g\nFat: 80 g"
         )
         expect(salad).to receive(:update_nutritional_info!).with(
-          "Batch total | Calories: 800 kcal | Protein: 32 g | Carbohydrates: 100 g | Fat: 24 g"
+          "Meal Total (AI Generated - 7/1/26)\nCalories: 800 kcal\nProtein: 32 g\nCarbohydrates: 100 g\nFat: 24 g"
         )
+
+        post nutrition_log_path, params: { message: "chili and salad", recipe_ids: [ 42, 7 ] },
+                                 as: :turbo_stream
+      end
+
+      it "does not write to recipes in read-only mode" do
+        allow(NutritionSkill).to receive(:write_enabled?).and_return(false)
+        expect(chili).not_to receive(:update_nutritional_info!)
+        expect(salad).not_to receive(:update_nutritional_info!)
 
         post nutrition_log_path, params: { message: "chili and salad", recipe_ids: [ 42, 7 ] },
                                  as: :turbo_stream
