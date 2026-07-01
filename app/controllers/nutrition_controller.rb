@@ -3,6 +3,7 @@ class NutritionController < ApplicationController
     @date = parse_date(params[:date])
     @entries = NutritionEntry.for_day(@date)
     @totals = NutritionEntry.totals_for(@date)
+    @scheduled_meals = Paprika::Meal.scheduled_between(Date.current - 7, Date.current + 2)
   end
 
   def log
@@ -57,20 +58,27 @@ class NutritionController < ApplicationController
     end
   end
 
+  # Overwrite the matched recipe's nutrition field with the AI's validated batch
+  # macros in one canonical format, standardizing (and correcting) it on every run.
   def write_batch_macros(entry)
     name = entry["recipe_match"]
     batch = entry["batch_macros"]
     return if name.blank? || batch.blank?
 
     recipe = Paprika::Recipe.find_by(ZNAME: name)
-    return if recipe.nil? || recipe.nutritional_info.present?
+    return if recipe.nil?
 
-    recipe.update_nutritional_info!(
-      "Batch total | Calories: #{batch['calories']}kcal | " \
-      "Protein: #{batch['protein']}g | Carbohydrates: #{batch['carbs']}g | " \
-      "Fat: #{batch['fat']}g"
-    )
+    standardized = standardized_nutrition(batch)
+    return if standardized == recipe.nutritional_info
+
+    recipe.update_nutritional_info!(standardized)
   rescue StandardError => e
     Rails.logger.warn("Failed to write batch macros for #{name}: #{e.message}")
+  end
+
+  def standardized_nutrition(batch)
+    "Batch total | Calories: #{batch['calories'].to_i} kcal | " \
+    "Protein: #{batch['protein'].to_i} g | Carbohydrates: #{batch['carbs'].to_i} g | " \
+    "Fat: #{batch['fat'].to_i} g"
   end
 end

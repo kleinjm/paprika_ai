@@ -13,8 +13,14 @@ class NutritionParser
     Two logging modes:
     - HOME COOKING: If they reference one of their master recipes (possibly as a
       fraction or serving, e.g. "1/4 of the chili"), compute the BATCH macros for
-      the whole recipe from its ingredients, then multiply by the fraction eaten.
-      Also return the full batch macros so they can be stored.
+      the whole recipe, then work out the portion they actually ate.
+      A recipe may include existing "nutritional_info". Treat it as UNTRUSTED:
+      internet recipes often have wrong or mislabeled data. Sanity-check it
+      against the ingredient list. If it is plausible, you may use it; if it looks
+      wrong (off by a large factor, missing, or inconsistent with the
+      ingredients), IGNORE it and compute the batch macros from the ingredients
+      instead. Always return the full, corrected batch macros so they can be
+      stored in a standardized format.
     - EATING OUT: Make a conservative, realistic estimate based on standard
       restaurant/database averages. Bracket to the closest common equivalent.
 
