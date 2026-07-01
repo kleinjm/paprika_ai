@@ -1,0 +1,45 @@
+div
+  .row
+    .col-12.mb-4
+      = link_to "← Back", nutrition_path, class: "btn btn-sm btn-outline-secondary mb-3"
+      h1.display-5 Nutrition History
+      p.text-muted Daily totals across every logged day.
+
+  .row.justify-content-center
+    .col-lg-10
+      - if @days.any?
+        - series = @days.reverse.map { |d| { date: d[:date].strftime("%-m/%-d"), calories: d[:totals][:calories].to_i, protein: d[:totals][:protein].to_f.round, carbs: d[:totals][:carbs].to_f.round, fat: d[:totals][:fat].to_f.round } }
+        .card.shadow-sm.mb-4
+          .card-body data-controller="nutrition-chart" data-nutrition-chart-series-value=series.to_json
+            div style="position: relative; height: 320px;"
+              canvas data-nutrition-chart-target="canvas"
+
+        .card.shadow-sm
+          .table-responsive
+            table.table.table-sm.mb-0.align-middle
+              thead
+                tr
+                  th Day
+                  th.text-end Cal
+                  th.text-end Protein
+                  th.text-end Carbs
+                  th.text-end Fat
+                  th.text-end.text-muted Fiber
+                  th.text-end.text-muted Sat Fat
+                  th.text-end.text-muted Sugar
+              tbody
+                - @days.each do |day|
+                  - totals = day[:totals]
+                  tr
+                    td
+                      = link_to day[:date].strftime("%a, %b %-d, %Y"), nutrition_path(date: day[:date])
+                    td.text-end = totals[:calories].to_i
+                    td.text-end.text-primary = "#{totals[:protein].to_f.round}g"
+                    td.text-end = "#{totals[:carbs].to_f.round}g"
+                    td.text-end = "#{totals[:fat].to_f.round}g"
+                    td.text-end.text-muted = "#{totals[:fiber].to_f.round}g"
+                    td.text-end.text-muted = "#{totals[:saturated_fat].to_f.round}g"
+                    td.text-end.text-muted = "#{totals[:sugar].to_f.round}g"
+      - else
+        .card.shadow-sm
+          .card-body.text-muted Nothing logged yet.

@@ -32,6 +32,10 @@ class NutritionController < ApplicationController
     end
   end
 
+  def history
+    @days = NutritionEntry.daily_totals
+  end
+
   def clear_day
     @date = parse_date(params[:date])
     NutritionEntry.for_day(@date).destroy_all
@@ -47,7 +51,27 @@ class NutritionController < ApplicationController
     render_day_update
   end
 
+  def edit_entry
+    @entry = NutritionEntry.find(params[:id])
+  end
+
+  def update_entry
+    @entry = NutritionEntry.find(params[:id])
+
+    if @entry.update(entry_params)
+      redirect_to nutrition_path(date: @entry.logged_on), notice: "Entry updated."
+    else
+      render :edit_entry, status: :unprocessable_entity
+    end
+  end
+
   private
+
+  def entry_params
+    params.require(:nutrition_entry).permit(
+      :item, :calories, :protein, :carbs, :fat, :fiber, :saturated_fat, :sugar
+    )
+  end
 
   def render_day_update
     @entries = NutritionEntry.for_day(@date)

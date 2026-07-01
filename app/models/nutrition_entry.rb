@@ -43,4 +43,13 @@ class NutritionEntry < ApplicationRecord
     )
     TOTALED_COLUMNS.zip(Array(sums)).to_h
   end
+
+  # One row per logged day (most recent first) with its summed nutrients.
+  def self.daily_totals
+    rows = group(:logged_on).order(logged_on: :desc).pluck(
+      Arel.sql("logged_on"),
+      *TOTALED_COLUMNS.map { |col| Arel.sql("COALESCE(SUM(#{col}),0)") }
+    )
+    rows.map { |date, *sums| { date: date, totals: TOTALED_COLUMNS.zip(sums).to_h } }
+  end
 end

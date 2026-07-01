@@ -28,7 +28,8 @@
             td.text-end.text-muted = entry.fiber.present? ? "#{entry.fiber.to_f.round}g" : "—"
             td.text-end.text-muted = entry.saturated_fat.present? ? "#{entry.saturated_fat.to_f.round}g" : "—"
             td.text-end.text-muted = entry.sugar.present? ? "#{entry.sugar.to_f.round}g" : "—"
-            td.text-end
-              = button_to "✕", nutrition_entry_path(entry), method: :delete, class: "btn btn-sm btn-link text-danger p-0", form: { data: { turbo_confirm: "Delete this entry?" } }, aria: { label: "Delete entry" }
+            td.text-end.text-nowrap
+              = link_to "✎", edit_nutrition_entry_path(entry), class: "btn btn-sm btn-link p-0 me-2", aria: { label: "Edit entry" }
+              = button_to "✕", nutrition_entry_path(entry), method: :delete, class: "btn btn-sm btn-link text-danger p-0", form: { data: { turbo_confirm: "Delete this entry?" }, class: "d-inline" }, aria: { label: "Delete entry" }
 - else
   .card-body.text-muted Nothing logged yet today.

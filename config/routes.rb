@@ -13,8 +13,11 @@ Rails.application.routes.draw do
   root "home#index"
 
   get "nutrition" => "nutrition#show", as: :nutrition
+  get "nutrition/history" => "nutrition#history", as: :nutrition_history
   post "nutrition/log" => "nutrition#log", as: :nutrition_log
   delete "nutrition/clear" => "nutrition#clear_day", as: :nutrition_clear
+  get "nutrition/entries/:id/edit" => "nutrition#edit_entry", as: :edit_nutrition_entry
+  patch "nutrition/entries/:id" => "nutrition#update_entry"
   delete "nutrition/entries/:id" => "nutrition#destroy_entry", as: :nutrition_entry
 
   resources :home, only: [ :index ] do

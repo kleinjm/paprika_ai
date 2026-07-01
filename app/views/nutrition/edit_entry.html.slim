@@ -1,0 +1,29 @@
+div
+  .row.justify-content-center
+    .col-lg-6
+      = link_to "← Back", nutrition_path(date: @entry.logged_on), class: "btn btn-sm btn-outline-secondary mb-3"
+      h1.h3.mb-1 Edit Entry
+      p.text-muted.small Correct anything the AI got wrong.
+
+      .card.shadow-sm
+        .card-body
+          = simple_form_for @entry, url: nutrition_entry_path(@entry), method: :patch do |f|
+            = f.input :item, input_html: { class: "form-control" }
+            .row
+              .col-6
+                = f.input :calories, input_html: { class: "form-control" }
+              .col-6
+                = f.input :protein, label: "Protein (g)", input_html: { class: "form-control" }
+              .col-6
+                = f.input :carbs, label: "Carbs (g)", input_html: { class: "form-control" }
+              .col-6
+                = f.input :fat, label: "Fat (g)", input_html: { class: "form-control" }
+              .col-6
+                = f.input :fiber, label: "Fiber (g)", input_html: { class: "form-control" }
+              .col-6
+                = f.input :saturated_fat, label: "Sat Fat (g)", input_html: { class: "form-control" }
+              .col-6
+                = f.input :sugar, label: "Sugar (g)", input_html: { class: "form-control" }
+            .mt-3
+              = f.button :submit, "Save", class: "btn btn-warning"
+              = link_to "Cancel", nutrition_path(date: @entry.logged_on), class: "btn btn-link"

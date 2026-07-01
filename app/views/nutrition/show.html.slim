@@ -1,7 +1,12 @@
-.container-fluid.py-4
+div
+  - if flash[:notice]
+    .alert.alert-success = flash[:notice]
+
   .row
     .col-12.mb-4
-      = link_to "← Back", root_path, class: "btn btn-sm btn-outline-secondary mb-3"
+      .d-flex.justify-content-between.align-items-start.mb-3
+        = link_to "← Back", root_path, class: "btn btn-sm btn-outline-secondary"
+        = link_to "History →", nutrition_history_path, class: "btn btn-sm btn-outline-secondary"
       h1.display-5 Nutrition Tracking
       p.text-muted Tell me what you ate today in plain English and I'll track the macros.
 

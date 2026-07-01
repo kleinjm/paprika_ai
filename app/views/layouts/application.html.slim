@@ -16,4 +16,5 @@ html
     = stylesheet_link_tag :app, "data-turbo-track": "reload"
     = javascript_importmap_tags
   body
-    = yield
+    .container.py-4
+      = yield

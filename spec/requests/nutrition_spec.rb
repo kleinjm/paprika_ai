@@ -40,6 +40,27 @@ RSpec.describe "Nutrition", type: :request do
     end
   end
 
+  describe "GET /nutrition/history" do
+    it "renders a row per logged day with totals" do
+      NutritionEntry.create!(logged_on: Date.new(2026, 6, 28), item: "eggs", calories: 150, protein: 12)
+      NutritionEntry.create!(logged_on: Date.new(2026, 6, 29), item: "banana", calories: 100, protein: 1)
+
+      get nutrition_history_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Nutrition History")
+      expect(response.body).to include("Jun 29, 2026")
+      expect(response.body).to include("Jun 28, 2026")
+      expect(response.body).to include("nutrition-chart")
+      expect(response.body).to include("data-nutrition-chart-series-value")
+    end
+
+    it "shows an empty state when nothing is logged" do
+      get nutrition_history_path
+      expect(response.body).to include("Nothing logged yet")
+    end
+  end
+
   describe "POST /nutrition/log" do
     let(:result) do
       NutritionParser::Result.new(
@@ -107,6 +128,38 @@ RSpec.describe "Nutrition", type: :request do
       it "redirects for an HTML request" do
         delete nutrition_entry_path(entry)
         expect(response).to redirect_to(nutrition_path(date: Date.new(2026, 6, 29)))
+      end
+    end
+
+    context "editing an entry" do
+      let!(:entry) do
+        NutritionEntry.create!(logged_on: Date.new(2026, 6, 29), item: "banana", calories: 100, protein: 1)
+      end
+
+      it "renders the edit form" do
+        get edit_nutrition_entry_path(entry)
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include("Edit Entry")
+        expect(response.body).to include("banana")
+      end
+
+      it "applies corrections and redirects back to the day" do
+        patch nutrition_entry_path(entry), params: {
+          nutrition_entry: { item: "large banana", calories: 120, protein: 2, fiber: 4 }
+        }
+
+        expect(response).to redirect_to(nutrition_path(date: Date.new(2026, 6, 29)))
+        entry.reload
+        expect(entry.item).to eq("large banana")
+        expect(entry.calories).to eq(120)
+        expect(entry.fiber).to eq(4)
+      end
+
+      it "re-renders the form when the update is invalid" do
+        patch nutrition_entry_path(entry), params: { nutrition_entry: { item: "" } }
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response.body).to include("Edit Entry")
       end
     end
 

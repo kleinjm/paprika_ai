@@ -83,4 +83,23 @@ RSpec.describe NutritionEntry do
       )
     end
   end
+
+  describe ".daily_totals" do
+    it "returns one summed row per day, most recent first" do
+      described_class.create!(logged_on: Date.new(2026, 6, 28), item: "a", calories: 100, protein: 10)
+      described_class.create!(logged_on: Date.new(2026, 6, 29), item: "b", calories: 200, protein: 20)
+      described_class.create!(logged_on: Date.new(2026, 6, 29), item: "c", calories: 50, protein: 5)
+
+      days = described_class.daily_totals
+
+      expect(days.map { |d| d[:date] }).to eq([ Date.new(2026, 6, 29), Date.new(2026, 6, 28) ])
+      expect(days.first[:totals][:calories]).to eq(250)
+      expect(days.first[:totals][:protein]).to eq(25)
+      expect(days.last[:totals][:calories]).to eq(100)
+    end
+
+    it "is empty when nothing is logged" do
+      expect(described_class.daily_totals).to eq([])
+    end
+  end
 end
