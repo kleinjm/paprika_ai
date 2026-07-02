@@ -20,6 +20,7 @@ class NutritionController < ApplicationController
       result = NutritionParser.new.parse(message, recipes: recipes)
       persist_entries(result.entries, message, recipes)
       @reply = result.reply
+      @llm_error = result.error
     end
 
     @entries = entries.for_day(@date)
@@ -27,7 +28,9 @@ class NutritionController < ApplicationController
     load_recipe_choices
 
     respond_to do |format|
-      format.turbo_stream
+      # A 422 on error means Turbo still renders the streams, but the form's
+      # reset/clear (guarded on submit success) is skipped, preserving the input.
+      format.turbo_stream { render :log, status: @llm_error ? :unprocessable_entity : :ok }
       format.html { redirect_to nutrition_path(date: @date) }
     end
   end

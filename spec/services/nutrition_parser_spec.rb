@@ -80,6 +80,7 @@ RSpec.describe NutritionParser do
       result = described_class.new(gemini: gemini).parse("x", recipes: [])
       expect(result.entries).to eq([])
       expect(result.reply).to include("couldn't read that")
+      expect(result.error).to be(true)
     end
 
     it "defaults the reply when JSON omits it" do
@@ -87,6 +88,7 @@ RSpec.describe NutritionParser do
 
       result = described_class.new(gemini: gemini).parse("x", recipes: [])
       expect(result.reply).to eq("Logged.")
+      expect(result.error).to be_falsey
     end
 
     it "returns a friendly message including the error code when the AI service raises" do
@@ -96,6 +98,7 @@ RSpec.describe NutritionParser do
       expect(result.entries).to eq([])
       expect(result.reply).to include("temporarily unavailable")
       expect(result.reply).to include("error 503")
+      expect(result.error).to be(true)
     end
 
     it "omits the code when the error has no status number" do

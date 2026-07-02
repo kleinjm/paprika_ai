@@ -3,7 +3,7 @@ require "json"
 # Turns a plain-English description of what the user ate into structured macro
 # entries, seeding the LLM with the user's Paprika recipes as reference.
 class NutritionParser
-  Result = Struct.new(:entries, :reply, keyword_init: true)
+  Result = Struct.new(:entries, :reply, :error, keyword_init: true)
 
   SYSTEM_PROMPT = <<~PROMPT.freeze
     You are a macro-tracking assistant for someone trying to put on muscle, so
@@ -65,7 +65,8 @@ class NutritionParser
     detail = code ? " (error #{code})" : ""
     Result.new(
       entries: [],
-      reply: "The nutrition assistant is temporarily unavailable#{detail} (the AI service may be busy). Please try again in a moment."
+      reply: "The nutrition assistant is temporarily unavailable#{detail} (the AI service may be busy). Please try again in a moment.",
+      error: true
     )
   end
 
@@ -108,6 +109,6 @@ class NutritionParser
       reply: data["reply"].presence || "Logged."
     )
   rescue JSON::ParserError
-    Result.new(entries: [], reply: "Sorry, I couldn't read that. Please try rephrasing what you ate.")
+    Result.new(entries: [], reply: "Sorry, I couldn't read that. Please try rephrasing what you ate.", error: true)
   end
 end

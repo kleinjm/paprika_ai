@@ -106,6 +106,21 @@ RSpec.describe "Nutrition", type: :request do
       expect(entry.nutrition_entry_recipes).to be_empty
     end
 
+    it "responds 422 with a red alert (and keeps no data) when the LLM errors" do
+      error_result = NutritionParser::Result.new(
+        entries: [], reply: "The nutrition assistant is temporarily unavailable (error 503).", error: true
+      )
+      allow(NutritionParser).to receive(:new).and_return(instance_double(NutritionParser, parse: error_result))
+
+      expect do
+        post nutrition_log_path, params: { message: "a banana" }, as: :turbo_stream
+      end.not_to change(NutritionEntry, :count)
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.body).to include("alert-danger")
+      expect(response.body).to include("temporarily unavailable")
+    end
+
     it "does not call the parser or create entries for a blank message" do
       expect(NutritionParser).not_to receive(:new)
 
