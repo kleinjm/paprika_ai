@@ -77,21 +77,9 @@ test:
 # Read https://guides.rubyonrails.org/configuring.html#configuring-a-database
 # for a full overview on how database connection configuration can be specified.
 #
+# Production runs on a single Postgres database (Neon). Solid Cache/Queue/Cable
+# share it — their tables are created by the InstallSolidLibraries migration.
+# Connection comes from the DATABASE_URL env var.
 production:
-  primary: &primary_production
-    <<: *default
-    database: paprika_ai_production
-    username: paprika_ai
-    password: <%= ENV["PAPRIKA_AI_DATABASE_PASSWORD"] %>
-  cache:
-    <<: *primary_production
-    database: paprika_ai_production_cache
-    migrations_paths: db/cache_migrate
-  queue:
-    <<: *primary_production
-    database: paprika_ai_production_queue
-    migrations_paths: db/queue_migrate
-  cable:
-    <<: *primary_production
-    database: paprika_ai_production_cable
-    migrations_paths: db/cable_migrate
+  <<: *default
+  url: <%= ENV["DATABASE_URL"] %>
