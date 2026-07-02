@@ -7,6 +7,7 @@ class NutritionController < ApplicationController
     @entries = entries.for_day(@date)
     @totals = entries.totals_for(@date)
     @goals = current_user.settings
+    @ai_configured = GeminiService.configured?
     load_recipe_choices
   end
 
@@ -24,6 +25,9 @@ class NutritionController < ApplicationController
       @reply = "Logged #{direct.map { |recipe, _| recipe.name }.join(', ')} from saved nutrition."
     elsif message.blank?
       @reply = "Tell me what you ate and I'll log it."
+    elsif !GeminiService.configured?
+      @reply = "AI is unavailable — no Gemini API key is configured. Add one to log free-text meals."
+      @llm_error = true
     else
       result = NutritionParser.new.parse(message, recipes: recipes)
       persist_entries(result.entries, message, recipes)

@@ -21,36 +21,40 @@ div
           #nutrition_reply.mb-3
             = render partial: "reply", locals: { reply: local_assigns[:reply] }
 
+          - unless @ai_configured
+            .alert.alert-danger AI is unavailable — no Gemini API key is configured. Add one to log meals.
+
           = form_with url: nutrition_log_path, method: :post, data: { turbo: true, controller: "reset-form meal-picker", action: "turbo:submit-end->reset-form#reset turbo:submit-end->meal-picker#clear" } do |f|
             = f.hidden_field :date, value: @date.iso8601
 
-            .d-flex.flex-wrap.gap-2.mb-3
-              - PortionSize.all.each do |size|
-                button.btn.btn-sm.btn-outline-secondary.rounded-pill.text-nowrap type="button" data-action="meal-picker#fill" data-meal-picker-title-param=size
-                  = size
-
-            - if @scheduled_meals.any?
+            fieldset disabled=(!@ai_configured)
               .d-flex.flex-wrap.gap-2.mb-3
-                - @scheduled_meals.each do |meal|
-                  button.btn.btn-sm.btn-outline-warning.text-dark.rounded-pill.text-nowrap type="button" data-action="meal-picker#fill" data-meal-picker-title-param=meal.title data-meal-picker-recipe-id-param=meal.recipe.id
-                    = meal.title
+                - PortionSize.all.each do |size|
+                  button.btn.btn-sm.btn-outline-secondary.rounded-pill.text-nowrap type="button" data-action="meal-picker#fill" data-meal-picker-title-param=size
+                    = size
 
-            - if @staple_recipes.any?
-              .d-flex.flex-wrap.gap-2.mb-3
-                - @staple_recipes.each do |recipe|
-                  button.btn.btn-sm.btn-outline-success.text-dark.rounded-pill.text-nowrap type="button" data-action="meal-picker#fill" data-meal-picker-title-param=recipe.name data-meal-picker-recipe-id-param=recipe.id
-                    = recipe.name
+              - if @scheduled_meals.any?
+                .d-flex.flex-wrap.gap-2.mb-3
+                  - @scheduled_meals.each do |meal|
+                    button.btn.btn-sm.btn-outline-warning.text-dark.rounded-pill.text-nowrap type="button" data-action="meal-picker#fill" data-meal-picker-title-param=meal.title data-meal-picker-recipe-id-param=meal.recipe.id
+                      = meal.title
 
-            - if @other_recipes.any?
-              .mb-3
-                select.form-select.form-select-sm data-action="meal-picker#pick"
-                  option value="" selected=true Add another recipe…
-                  - @other_recipes.each do |recipe|
-                    option value=recipe.id data-title=recipe.name = recipe.name
+              - if @staple_recipes.any?
+                .d-flex.flex-wrap.gap-2.mb-3
+                  - @staple_recipes.each do |recipe|
+                    button.btn.btn-sm.btn-outline-success.text-dark.rounded-pill.text-nowrap type="button" data-action="meal-picker#fill" data-meal-picker-title-param=recipe.name data-meal-picker-recipe-id-param=recipe.id
+                      = recipe.name
 
-            .input-group
-              = f.text_field :message, placeholder: "e.g. small bowl bean salad, medium plate chicken breast", class: "form-control", autofocus: true, autocomplete: "off", data: { meal_picker_target: "field" }
-              = f.submit "Log", class: "btn btn-warning"
+              - if @other_recipes.any?
+                .mb-3
+                  select.form-select.form-select-sm data-action="meal-picker#pick"
+                    option value="" selected=true Add another recipe…
+                    - @other_recipes.each do |recipe|
+                      option value=recipe.id data-title=recipe.name = recipe.name
+
+              .input-group
+                = f.text_field :message, placeholder: "e.g. small bowl bean salad, medium plate chicken breast", class: "form-control", autofocus: true, autocomplete: "off", data: { meal_picker_target: "field" }
+                = f.submit "Log", class: "btn btn-warning"
 
       .card.shadow-sm
         .card-header

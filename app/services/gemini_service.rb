@@ -12,6 +12,17 @@ class GeminiService
   # HTTP statuses worth retrying on a different model (overload/rate/server errors).
   RETRYABLE_STATUSES = [ 429, 500, 502, 503, 504 ].freeze
 
+  # Whether a Gemini API key is configured in the credentials.
+  def self.configured?
+    api_key.present?
+  rescue StandardError
+    false
+  end
+
+  def self.api_key
+    Rails.application.credentials.dig(:google, :gemini, :api_key)
+  end
+
   def initialize(models: nil)
     @models = Array(models).map(&:to_s).reject(&:empty?)
     @models = default_models if @models.empty?
@@ -48,7 +59,7 @@ class GeminiService
     client = Gemini.new(
       credentials: {
         service: "generative-language-api",
-        api_key: Rails.application.credentials.dig(:google, :gemini, :api_key)
+        api_key: self.class.api_key
       },
       options: { model: model }
     )

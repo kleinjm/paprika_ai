@@ -1,5 +1,5 @@
 - if local_assigns[:reply].present?
   .alert.mb-0 class=(local_assigns[:error] ? "alert-danger" : "alert-warning")
-    = simple_format(reply)
+    = simple_format(reply, class: "mb-0")
 - else
   .text-muted Ready when you are — what did you eat?

@@ -14,6 +14,7 @@ RSpec.describe "Nutrition", type: :request do
   before do
     stub_paprika
     sign_in user
+    allow(GeminiService).to receive(:configured?).and_return(true)
   end
 
   describe "authentication" do
@@ -29,6 +30,15 @@ RSpec.describe "Nutrition", type: :request do
       get nutrition_path
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Nutrition Tracking")
+    end
+
+    it "shows an error and disables the form when no API key is configured" do
+      allow(GeminiService).to receive(:configured?).and_return(false)
+
+      get nutrition_path
+
+      expect(response.body).to include("no Gemini API key is configured")
+      expect(response.body).to include("<fieldset disabled")
     end
 
     it "renders a clickable pill (with recipe id) only for meals that have a recipe" do
@@ -161,6 +171,16 @@ RSpec.describe "Nutrition", type: :request do
       expect(response).to have_http_status(:unprocessable_entity)
       expect(response.body).to include("alert-danger")
       expect(response.body).to include("temporarily unavailable")
+    end
+
+    it "returns a friendly 422 without calling the LLM when no API key is configured" do
+      allow(GeminiService).to receive(:configured?).and_return(false)
+      expect(NutritionParser).not_to receive(:new)
+
+      post nutrition_log_path, params: { message: "a banana" }, as: :turbo_stream
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.body).to include("no Gemini API key is configured")
     end
 
     it "does not call the parser or create entries for a blank message" do

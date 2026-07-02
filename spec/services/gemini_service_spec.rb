@@ -19,6 +19,23 @@ RSpec.describe GeminiService do
     allow(Rails.application.credentials).to receive(:dig).with(:google, :gemini, :api_key).and_return("test-key")
   end
 
+  describe ".configured?" do
+    it "is true when an api key is present" do
+      allow(Rails.application.credentials).to receive(:dig).with(:google, :gemini, :api_key).and_return("key")
+      expect(described_class.configured?).to be(true)
+    end
+
+    it "is false when the api key is missing" do
+      allow(Rails.application.credentials).to receive(:dig).with(:google, :gemini, :api_key).and_return(nil)
+      expect(described_class.configured?).to be(false)
+    end
+
+    it "is false when the credentials can't be read" do
+      allow(Rails.application.credentials).to receive(:dig).and_raise(StandardError)
+      expect(described_class.configured?).to be(false)
+    end
+  end
+
   describe "#generate_content" do
     it "passes the prompt through and returns the first candidate's text" do
       expect(client).to receive(:generate_content)
