@@ -1,0 +1,33 @@
+# Render Blueprint (https://render.com/docs/blueprint-spec).
+# The service was first created via the dashboard; this file documents the
+# intended configuration and lets it be recreated/synced as a Blueprint.
+services:
+  - type: web
+    name: paprika-ai
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: oregon
+    healthCheckPath: /up
+    autoDeploy: true
+    envVars:
+      # Secrets — set these in the Render dashboard, not here.
+      - key: RAILS_MASTER_KEY   # contents of config/credentials/production.key
+        sync: false
+      - key: DATABASE_URL       # Neon connection string
+        sync: false
+      # App runtime config.
+      - key: RAILS_ENV
+        value: production
+      - key: RAILS_LOG_TO_STDOUT
+        value: "true"
+      - key: RAILS_SERVE_STATIC_FILES
+        value: "true"
+      # Run Solid Queue inside Puma so no separate worker service is needed.
+      - key: SOLID_QUEUE_IN_PUMA
+        value: "true"
+      # Single web process sized for the free tier (512 MB).
+      - key: WEB_CONCURRENCY
+        value: "1"
+      - key: RAILS_MAX_THREADS
+        value: "3"
