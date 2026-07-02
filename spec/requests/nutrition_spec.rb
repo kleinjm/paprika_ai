@@ -105,6 +105,17 @@ RSpec.describe "Nutrition", type: :request do
     end
   end
 
+  describe "recipe links in the log" do
+    it "links a logged entry's recipe to its recipe page" do
+      entry = user.nutrition_entries.create!(logged_on: Date.current, item: "chili", recipe_match: "Chili")
+      entry.nutrition_entry_recipes.create!(recipe_id: 42)
+
+      get nutrition_path
+
+      expect(response.body).to include(recipe_path(42))
+    end
+  end
+
   describe "POST /nutrition/log" do
     let(:result) do
       NutritionParser::Result.new(

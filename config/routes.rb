@@ -28,6 +28,8 @@ Rails.application.routes.draw do
   post "profile/staple_recipes" => "user_staple_recipes#create", as: :staple_recipes
   delete "profile/staple_recipes/:id" => "user_staple_recipes#destroy", as: :staple_recipe
 
+  resources :recipes, only: [ :show ]
+
   get "nutrition" => "nutrition#show", as: :nutrition
   get "nutrition/history" => "nutrition#history", as: :nutrition_history
   post "nutrition/log" => "nutrition#log", as: :nutrition_log

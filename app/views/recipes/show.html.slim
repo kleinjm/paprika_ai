@@ -1,0 +1,28 @@
+div
+  .row.justify-content-center
+    .col-lg-8
+      = link_to "← Back", nutrition_path, class: "btn btn-sm btn-outline-secondary mb-3"
+      h1.h3.mb-1 = @recipe.name
+      - if @recipe.recipe_categories.any?
+        p.text-muted.small = @recipe.recipe_categories.map(&:name).join(", ")
+
+      - if @recipe.nutritional_info.present?
+        .card.shadow-sm.mb-4
+          .card-header
+            h2.h6.mb-0 Nutrition
+          .card-body
+            .prose = simple_format(@recipe.nutritional_info)
+
+      - if @recipe.ingredients.present?
+        .card.shadow-sm.mb-4
+          .card-header
+            h2.h6.mb-0 Ingredients
+          .card-body
+            .prose = simple_format(@recipe.ingredients)
+
+      - if @recipe.directions.present?
+        .card.shadow-sm
+          .card-header
+            h2.h6.mb-0 Directions
+          .card-body
+            .prose = simple_format(@recipe.directions)

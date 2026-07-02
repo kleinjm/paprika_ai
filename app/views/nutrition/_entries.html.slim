@@ -20,7 +20,11 @@
             td
               = entry.item
               - if entry.recipe_match.present?
-                span.badge.bg-light.text-dark.ms-1 = entry.recipe_match
+                - recipe_id = entry.nutrition_entry_recipes.first&.recipe_id
+                - if recipe_id
+                  = link_to entry.recipe_match, recipe_path(recipe_id), class: "badge bg-light text-dark text-decoration-none ms-1"
+                - else
+                  span.badge.bg-light.text-dark.ms-1 = entry.recipe_match
             td.text-end = entry.calories
             td.text-end = entry.protein.present? ? "#{entry.protein.to_f.round}g" : "—"
             td.text-end = entry.carbs.present? ? "#{entry.carbs.to_f.round}g" : "—"
