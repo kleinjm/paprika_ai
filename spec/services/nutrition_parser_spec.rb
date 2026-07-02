@@ -54,6 +54,15 @@ RSpec.describe NutritionParser do
       )
     end
 
+    it "collects verified recipes that need more nutrition data" do
+      allow(gemini).to receive(:generate_content).and_return(
+        %({"entries":[],"needs_data":["Chili","Stew"],"reply":"ok"})
+      )
+
+      result = described_class.new(gemini: gemini).parse("x", recipes: [])
+      expect(result.needs_data).to eq([ "Chili", "Stew" ])
+    end
+
     it "strips markdown code fences before parsing" do
       allow(gemini).to receive(:generate_content).and_return(
         %(```json\n{"entries":[],"reply":"fenced"}\n```)

@@ -25,6 +25,8 @@ Rails.application.routes.draw do
   get "profile" => "profiles#show", as: :profile
   get "profile/nutrition_goals/edit" => "user_settings#edit", as: :edit_nutrition_goals
   patch "profile/nutrition_goals" => "user_settings#update", as: :nutrition_goals
+  post "profile/staple_recipes" => "user_staple_recipes#create", as: :staple_recipes
+  delete "profile/staple_recipes/:id" => "user_staple_recipes#destroy", as: :staple_recipe
 
   get "nutrition" => "nutrition#show", as: :nutrition
   get "nutrition/history" => "nutrition#history", as: :nutrition_history

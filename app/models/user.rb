@@ -23,6 +23,7 @@ class User < ApplicationRecord
          :recoverable, :rememberable, :validatable
 
   has_many :nutrition_entries, dependent: :destroy
+  has_many :user_staple_recipes, dependent: :destroy
   has_one :settings, class_name: "UserSettings", dependent: :destroy
 
   # Always return a settings record so views/forms have something to render.

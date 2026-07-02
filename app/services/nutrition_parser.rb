@@ -3,7 +3,7 @@ require "json"
 # Turns a plain-English description of what the user ate into structured macro
 # entries, seeding the LLM with the user's Paprika recipes as reference.
 class NutritionParser
-  Result = Struct.new(:entries, :reply, :error, keyword_init: true)
+  Result = Struct.new(:entries, :reply, :error, :needs_data, keyword_init: true)
 
   SYSTEM_PROMPT = <<~PROMPT.freeze
     You are a macro-tracking assistant for someone trying to put on muscle, so
@@ -16,15 +16,19 @@ class NutritionParser
 
     Two logging modes:
     - HOME COOKING: If they reference one of their master recipes (possibly as a
-      fraction or serving, e.g. "1/4 of the chili"), compute the BATCH macros for
-      the whole recipe, then work out the portion they actually ate.
-      A recipe may include existing "nutritional_info". Treat it as UNTRUSTED:
-      internet recipes often have wrong or mislabeled data. Sanity-check it
-      against the ingredient list. If it is plausible, you may use it; if it looks
-      wrong (off by a large factor, missing, or inconsistent with the
-      ingredients), IGNORE it and compute the batch macros from the ingredients
-      instead. Always return the full, corrected batch macros so they can be
-      stored in a standardized format.
+      fraction or serving, e.g. "1/4 of the chili"), work out the batch macros for
+      the whole recipe, then the portion they actually ate. A recipe may include
+      existing "nutritional_info":
+        * VERIFIED DATA: If nutritional_info starts with the word "Verified", it
+          was entered by hand from a nutrition label. TRUST IT COMPLETELY — do NOT
+          estimate or recompute. Use those numbers directly. Set "batch_macros" to
+          null so the stored data is left untouched. If a verified recipe is
+          MISSING any of calories/protein/carbs/fat/fiber/saturated_fat/sugar, add
+          the recipe's name to the top-level "needs_data" list.
+        * OTHERWISE: Treat nutritional_info as UNTRUSTED — internet recipes often
+          have wrong data. Sanity-check against the ingredients; if it looks wrong
+          or is missing, compute the batch macros from the ingredients. Return the
+          full corrected "batch_macros" so it can be stored.
     - EATING OUT: Make a conservative, realistic estimate based on standard
       restaurant/database averages. Bracket to the closest common equivalent.
 
@@ -36,9 +40,10 @@ class NutritionParser
           "calories": int, "protein": int, "carbs": int, "fat": int,
           "fiber": int, "saturated_fat": int, "sugar": int,
           "recipe_id": int (the "id" of the matched recipe from the reference list) or null,
-          "batch_macros": { "calories": int, "protein": int, "carbs": int, "fat": int } or null
+          "batch_macros": { "calories": int, "protein": int, "carbs": int, "fat": int, "fiber": int, "saturated_fat": int, "sugar": int } or null
         }
       ],
+      "needs_data": [ "names of Verified recipes missing some nutrients" ],
       "reply": "a short friendly confirmation of what you logged and the day's running totals"
     }
 
@@ -47,8 +52,8 @@ class NutritionParser
 
     Only set "recipe_id" and "batch_macros" for HOME COOKING items that matched
     one of the provided reference recipes; use the recipe's exact "id". For
-    anything not in the reference list, set both to null. Round all numbers to
-    integers.
+    anything not in the reference list, set both to null. Set "batch_macros" to
+    null for Verified recipes. Round all numbers to integers.
   PROMPT
 
   def initialize(gemini: GeminiService.new)
@@ -106,7 +111,8 @@ class NutritionParser
     data = JSON.parse(json)
     Result.new(
       entries: Array(data["entries"]),
-      reply: data["reply"].presence || "Logged."
+      reply: data["reply"].presence || "Logged.",
+      needs_data: Array(data["needs_data"])
     )
   rescue JSON::ParserError
     Result.new(entries: [], reply: "Sorry, I couldn't read that. Please try rephrasing what you ate.", error: true)

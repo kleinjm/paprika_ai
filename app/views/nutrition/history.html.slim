@@ -9,8 +9,9 @@ div
     .col-lg-10
       - if @days.any?
         - series = @days.reverse.map { |d| { date: d[:date].strftime("%-m/%-d"), calories: d[:totals][:calories].to_i, protein: d[:totals][:protein].to_f.round, carbs: d[:totals][:carbs].to_f.round, fat: d[:totals][:fat].to_f.round } }
+        - goals = @goals ? { calories: @goals.calorie_goal, protein: @goals.protein_goal, carbs: @goals.carbs_goal, fat: @goals.fat_goal } : {}
         .card.shadow-sm.mb-4
-          .card-body data-controller="nutrition-chart" data-nutrition-chart-series-value=series.to_json
+          .card-body data-controller="nutrition-chart" data-nutrition-chart-series-value=series.to_json data-nutrition-chart-goals-value=goals.to_json
             div style="position: relative; height: 320px;"
               canvas data-nutrition-chart-target="canvas"
 

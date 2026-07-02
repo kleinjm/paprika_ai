@@ -10,7 +10,7 @@
 # app can read existing data without ever modifying the Paprika database.
 class NutritionSkill
   # Bump this when the format or computed fields change to trigger backfill.
-  VERSION_DATE = Date.new(2026, 7, 1)
+  VERSION_DATE = Date.new(2026, 7, 2)
   HEADER_PREFIX = "Meal Total (AI Generated".freeze
 
   class << self
@@ -29,6 +29,9 @@ class NutritionSkill
         Protein: #{batch['protein'].to_i} g
         Carbohydrates: #{batch['carbs'].to_i} g
         Fat: #{batch['fat'].to_i} g
+        Fiber: #{batch['fiber'].to_i} g
+        Saturated Fat: #{batch['saturated_fat'].to_i} g
+        Sugar: #{batch['sugar'].to_i} g
       INFO
     end
   end

@@ -21,6 +21,7 @@ class NutritionController < ApplicationController
       result = NutritionParser.new.parse(message, recipes: recipes)
       persist_entries(result.entries, message, recipes)
       @reply = result.reply
+      @reply += "\n\nThese recipes need more nutrition data: #{result.needs_data.join(', ')}." if result.needs_data.present?
       @llm_error = result.error
     end
 
@@ -39,6 +40,7 @@ class NutritionController < ApplicationController
 
   def history
     @days = entries.daily_totals
+    @goals = current_user.settings
   end
 
   def clear_day
@@ -106,7 +108,11 @@ class NutritionController < ApplicationController
       .scheduled_between(Date.current - MEAL_WINDOW_BACK, Date.current + MEAL_WINDOW_AHEAD)
       .select { |meal| meal.recipe.present? }
     pill_recipe_ids = @scheduled_meals.map { |meal| meal.recipe.id }
-    @other_recipes = Paprika::Recipe.not_trashed_excluding(pill_recipe_ids)
+    staple_ids = current_user.user_staple_recipes.pluck(:recipe_id)
+    # Staples become their own pill row, deduped against the meal pills.
+    @staple_recipes = Paprika::Recipe.not_trashed_in(staple_ids - pill_recipe_ids)
+    # The dropdown holds everything not already reachable as a pill.
+    @other_recipes = Paprika::Recipe.not_trashed_excluding(pill_recipe_ids + staple_ids)
   end
 
   # Only the recipes the user explicitly picked (via pills or the dropdown) are

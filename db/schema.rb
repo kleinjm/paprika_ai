@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_02_180000) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_02_190000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -53,6 +53,15 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_02_180000) do
     t.index ["user_id"], name: "index_user_settings_on_user_id", unique: true
   end
 
+  create_table "user_staple_recipes", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.integer "recipe_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "recipe_id"], name: "index_staples_on_user_and_recipe", unique: true
+    t.index ["user_id"], name: "index_user_staple_recipes_on_user_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false
@@ -68,4 +77,5 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_02_180000) do
   add_foreign_key "nutrition_entries", "users"
   add_foreign_key "nutrition_entry_recipes", "nutrition_entries"
   add_foreign_key "user_settings", "users"
+  add_foreign_key "user_staple_recipes", "users"
 end

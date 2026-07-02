@@ -3,9 +3,10 @@ require "rails_helper"
 RSpec.describe "Nutrition", type: :request do
   # Keep the specs off the read-only Paprika SQLite DB by stubbing the Paprika
   # query methods the controller uses, while letting the real controller logic run.
-  def stub_paprika(scheduled_meals: [], other_recipes: [])
+  def stub_paprika(scheduled_meals: [], other_recipes: [], staple_recipes: [])
     allow(Paprika::Meal).to receive(:scheduled_between).and_return(scheduled_meals)
     allow(Paprika::Recipe).to receive(:not_trashed_excluding).and_return(other_recipes)
+    allow(Paprika::Recipe).to receive(:not_trashed_in).and_return(staple_recipes)
   end
 
   let(:user) { User.create!(email: "test@example.com", password: "password") }
@@ -62,6 +63,15 @@ RSpec.describe "Nutrition", type: :request do
       expect(response.body).to include("Zuppa Toscana")
       expect(response.body).to include("meal-picker#pick")
     end
+
+    it "renders a pill for each staple recipe" do
+      stub_paprika(staple_recipes: [ double(id: 88, name: "Weekly Overnight Oats") ])
+
+      get nutrition_path
+
+      expect(response.body).to include("Weekly Overnight Oats")
+      expect(response.body).to include("88")
+    end
   end
 
   describe "GET /nutrition/history" do
@@ -82,6 +92,16 @@ RSpec.describe "Nutrition", type: :request do
     it "shows an empty state when nothing is logged" do
       get nutrition_history_path
       expect(response.body).to include("Nothing logged yet")
+    end
+
+    it "passes the user's goals to the chart when set" do
+      user.create_settings!(calorie_goal: 2000, protein_goal: 100, carbs_goal: 200, fat_goal: 70)
+      user.nutrition_entries.create!(logged_on: Date.current, item: "x", calories: 500)
+
+      get nutrition_history_path
+
+      expect(response.body).to include("data-nutrition-chart-goals-value")
+      expect(response.body).to include("2000")
     end
   end
 
@@ -215,10 +235,10 @@ RSpec.describe "Nutrition", type: :request do
             { "item" => "medium bowl chili", "calories" => 600, "protein" => 45, "carbs" => 30, "fat" => 20,
               "fiber" => 12, "saturated_fat" => 6, "sugar" => 5,
               "recipe_id" => 42,
-              "batch_macros" => { "calories" => 2400, "protein" => 180, "carbs" => 120, "fat" => 80 } },
+              "batch_macros" => { "calories" => 2400, "protein" => 180, "carbs" => 120, "fat" => 80, "fiber" => 48, "saturated_fat" => 24, "sugar" => 20 } },
             { "item" => "small bowl bean salad", "calories" => 200, "protein" => 8, "carbs" => 25, "fat" => 6,
               "recipe_id" => 7,
-              "batch_macros" => { "calories" => 800, "protein" => 32, "carbs" => 100, "fat" => 24 } }
+              "batch_macros" => { "calories" => 800, "protein" => 32, "carbs" => 100, "fat" => 24, "fiber" => 40, "saturated_fat" => 8, "sugar" => 16 } }
           ],
           reply: "Logged both."
         )
@@ -247,10 +267,10 @@ RSpec.describe "Nutrition", type: :request do
 
       it "standardizes each matched recipe's nutrition" do
         expect(chili).to receive(:update_nutritional_info!).with(
-          "Meal Total (AI Generated - 7/1/26)\nCalories: 2400 kcal\nProtein: 180 g\nCarbohydrates: 120 g\nFat: 80 g"
+          "Meal Total (AI Generated - 7/2/26)\nCalories: 2400 kcal\nProtein: 180 g\nCarbohydrates: 120 g\nFat: 80 g\nFiber: 48 g\nSaturated Fat: 24 g\nSugar: 20 g"
         )
         expect(salad).to receive(:update_nutritional_info!).with(
-          "Meal Total (AI Generated - 7/1/26)\nCalories: 800 kcal\nProtein: 32 g\nCarbohydrates: 100 g\nFat: 24 g"
+          "Meal Total (AI Generated - 7/2/26)\nCalories: 800 kcal\nProtein: 32 g\nCarbohydrates: 100 g\nFat: 24 g\nFiber: 40 g\nSaturated Fat: 8 g\nSugar: 16 g"
         )
 
         post nutrition_log_path, params: { message: "chili and salad", recipe_ids: [ 42, 7 ] },
@@ -264,6 +284,22 @@ RSpec.describe "Nutrition", type: :request do
 
         post nutrition_log_path, params: { message: "chili and salad", recipe_ids: [ 42, 7 ] },
                                  as: :turbo_stream
+      end
+
+      it "leaves verified recipes untouched and flags missing nutrition data" do
+        verified = instance_double(Paprika::Recipe, id: 42, name: "Chili", nutritional_info: "Verified\nCalories: 500")
+        allow(Paprika::Recipe).to receive(:where).with(Z_PK: [ 42 ]).and_return([ verified ])
+        allow(NutritionParser).to receive(:new).and_return(instance_double(NutritionParser, parse:
+          NutritionParser::Result.new(
+            entries: [ { "item" => "1/4 chili", "calories" => 125, "protein" => 10, "recipe_id" => 42, "batch_macros" => nil } ],
+            reply: "Logged.", needs_data: [ "Chili" ]
+          )))
+
+        expect(verified).not_to receive(:update_nutritional_info!)
+
+        post nutrition_log_path, params: { message: "1/4 chili", recipe_ids: [ 42 ] }, as: :turbo_stream
+
+        expect(response.body).to include("These recipes need more nutrition data: Chili")
       end
 
       it "still logs the entry when writing back to Paprika fails" do

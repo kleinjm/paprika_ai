@@ -60,6 +60,7 @@ module Paprika
     # Paprika marks trashed recipes with ZINTRASH = 1; live recipes are 0 (or NULL).
     scope :not_trashed, -> { where(ZINTRASH: [ nil, 0 ]) }
     scope :not_trashed_excluding, ->(ids) { not_trashed.where.not(Z_PK: ids).order(:ZNAME) }
+    scope :not_trashed_in, ->(ids) { not_trashed.where(Z_PK: ids).order(:ZNAME) }
 
     # This is the join table for recipes and categories.
     has_many :categories, class_name: "Paprika::Category", foreign_key: "Z_12RECIPES"

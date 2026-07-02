@@ -1,24 +1,27 @@
 - goals = local_assigns[:goals]
 - nutrients = [ [ "Calories", totals[:calories].to_i, goals&.calorie_goal, "" ], [ "Protein", totals[:protein].to_f.round, goals&.protein_goal, "g" ], [ "Carbs", totals[:carbs].to_f.round, goals&.carbs_goal, "g" ], [ "Fat", totals[:fat].to_f.round, goals&.fat_goal, "g" ] ]
 
-.row.text-center
-  - nutrients.each do |label, amount, goal, unit|
-    .col
-      - if goal
-        .h4.mb-0 = "#{amount} / #{goal}#{unit}"
-        - remaining = goal - amount
-        - if remaining >= 0
-          .small.text-muted = "#{remaining}#{unit} left"
-        - else
-          .small.fw-bold = "#{-remaining}#{unit} over"
-      - else
-        .h4.mb-0 = "#{amount}#{unit}"
-      .text-muted.small = label
+fieldset
+  legend.float-none.w-auto.small.text-muted.mb-2 Daily Totals
 
-.row.text-center.text-muted.small.mt-2
-  .col
-    | Fiber #{totals[:fiber].to_f.round}g
-  .col
-    | Sat Fat #{totals[:saturated_fat].to_f.round}g
-  .col
-    | Sugar #{totals[:sugar].to_f.round}g
+  .row.text-center
+    - nutrients.each do |label, amount, goal, unit|
+      .col
+        - if goal
+          .h4.mb-1 = "#{amount} / #{goal}#{unit}"
+          - remaining = goal - amount
+          - if remaining >= 0
+            span.badge.bg-secondary.rounded-pill = "#{remaining}#{unit} left"
+          - else
+            span.badge.bg-warning.text-dark.rounded-pill = "#{-remaining}#{unit} over"
+        - else
+          .h4.mb-0 = "#{amount}#{unit}"
+        .text-muted.small = label
+
+  .row.text-center.text-muted.small.mt-3
+    .col
+      | Fiber #{totals[:fiber].to_f.round}g
+    .col
+      | Sat Fat #{totals[:saturated_fat].to_f.round}g
+    .col
+      | Sugar #{totals[:sugar].to_f.round}g

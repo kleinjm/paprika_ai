@@ -8,3 +8,10 @@ user.password = password
 user.save!
 
 puts "Ensured user #{user.email}."
+
+# Seed the user's nutrition goals from the credentials, if present.
+goals = Rails.application.credentials.dig(:user_settings)
+if goals.present?
+  user.settings_or_build.update!(goals.slice(*UserSettings::GOALS))
+  puts "Set nutrition goals for #{user.email}."
+end

@@ -30,3 +30,23 @@ div
                 .text-muted.small Fat
           - else
             p.text-muted.mb-0 No goals set yet.
+
+      .card.shadow-sm.mt-4
+        .card-header
+          h2.h5.mb-0 Staple Recipes
+        .card-body
+          p.text-muted.small Recipes you eat all the time — they show up as quick-add pills on the tracker.
+          - if @available_recipes.any?
+            = form_with url: staple_recipes_path, method: :post, data: { controller: "auto-submit" } do
+              select.form-select name="recipe_id" data-action="change->auto-submit#submit"
+                option value="" Add a staple recipe…
+                - @available_recipes.each do |recipe|
+                  option value=recipe.id = recipe.name
+          - if @staple_recipes.any?
+            ul.list-group.mt-3
+              - @staple_recipes.each do |recipe|
+                li.list-group-item.d-flex.justify-content-between.align-items-center
+                  = recipe.name
+                  = button_to "Remove", staple_recipe_path(@staple_joins[recipe.id]), method: :delete, class: "btn btn-sm btn-link text-danger p-0", form: { data: { turbo_confirm: "Remove this staple recipe?" } }
+          - else
+            p.text-muted.mb-0 No staple recipes yet.
