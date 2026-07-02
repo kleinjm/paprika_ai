@@ -23,16 +23,26 @@ mock_foods = [
   { item: "Cottage cheese and berries",      calories: 220, protein: 24, carbs: 18, fat: 6,  fiber: 3,  saturated_fat: 3, sugar: 12 }
 ]
 
+# Create (or update the password of) a user from EMAIL/PASSWORD env vars,
+# falling back to a demo account. The mock data below is attached to this user.
+email = ENV["EMAIL"].presence || "demo@example.com"
+password = ENV["PASSWORD"].presence || "password"
+
+user = User.find_or_initialize_by(email: email)
+user.password = password
+user.save!
+puts "Ensured user #{user.email}."
+
 start_date = Date.current - 29
-NutritionEntry.where(logged_on: start_date..Date.current).destroy_all
+user.nutrition_entries.where(logged_on: start_date..Date.current).destroy_all
 
 (start_date..Date.current).each do |day|
   # 3-4 items per day, deterministically varied by day-of-year (no RNG so re-seeding is stable).
   count = 3 + (day.yday % 2)
   count.times do |i|
     food = mock_foods[(day.yday + i) % mock_foods.size]
-    NutritionEntry.create!(food.merge(logged_on: day, raw_input: "seed"))
+    user.nutrition_entries.create!(food.merge(logged_on: day, raw_input: "seed"))
   end
 end
 
-puts "Seeded nutrition entries for #{start_date} through #{Date.current} (#{NutritionEntry.where(logged_on: start_date..Date.current).count} entries)."
+puts "Seeded #{user.nutrition_entries.where(logged_on: start_date..Date.current).count} nutrition entries for #{user.email} (#{start_date} through #{Date.current})."

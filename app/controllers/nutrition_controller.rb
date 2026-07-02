@@ -4,8 +4,8 @@ class NutritionController < ApplicationController
 
   def show
     @date = parse_date(params[:date])
-    @entries = NutritionEntry.for_day(@date)
-    @totals = NutritionEntry.totals_for(@date)
+    @entries = entries.for_day(@date)
+    @totals = entries.totals_for(@date)
     load_recipe_choices
   end
 
@@ -22,8 +22,8 @@ class NutritionController < ApplicationController
       @reply = result.reply
     end
 
-    @entries = NutritionEntry.for_day(@date)
-    @totals = NutritionEntry.totals_for(@date)
+    @entries = entries.for_day(@date)
+    @totals = entries.totals_for(@date)
     load_recipe_choices
 
     respond_to do |format|
@@ -33,18 +33,18 @@ class NutritionController < ApplicationController
   end
 
   def history
-    @days = NutritionEntry.daily_totals
+    @days = entries.daily_totals
   end
 
   def clear_day
     @date = parse_date(params[:date])
-    NutritionEntry.for_day(@date).destroy_all
+    entries.for_day(@date).destroy_all
     @reply = "Cleared the log for #{@date.strftime('%B %-d')}."
     render_day_update
   end
 
   def destroy_entry
-    entry = NutritionEntry.find(params[:id])
+    entry = entries.find(params[:id])
     @date = entry.logged_on
     entry.destroy
     @reply = "Removed \"#{entry.item}\"."
@@ -52,11 +52,11 @@ class NutritionController < ApplicationController
   end
 
   def edit_entry
-    @entry = NutritionEntry.find(params[:id])
+    @entry = entries.find(params[:id])
   end
 
   def update_entry
-    @entry = NutritionEntry.find(params[:id])
+    @entry = entries.find(params[:id])
 
     if @entry.update(entry_params)
       redirect_to nutrition_path(date: @entry.logged_on), notice: "Entry updated."
@@ -67,6 +67,10 @@ class NutritionController < ApplicationController
 
   private
 
+  def entries
+    current_user.nutrition_entries
+  end
+
   def entry_params
     params.require(:nutrition_entry).permit(
       :item, :calories, :protein, :carbs, :fat, :fiber, :saturated_fat, :sugar
@@ -74,8 +78,8 @@ class NutritionController < ApplicationController
   end
 
   def render_day_update
-    @entries = NutritionEntry.for_day(@date)
-    @totals = NutritionEntry.totals_for(@date)
+    @entries = entries.for_day(@date)
+    @totals = entries.totals_for(@date)
 
     respond_to do |format|
       format.turbo_stream { render :log }
@@ -110,13 +114,13 @@ class NutritionController < ApplicationController
 
   # Save each parsed item as its own entry, link it to its matched recipe, and
   # standardize that recipe's stored nutrition.
-  def persist_entries(entries, raw_input, recipes)
+  def persist_entries(parsed_entries, raw_input, recipes)
     recipes_by_id = recipes.index_by(&:id)
 
-    entries.each do |entry|
+    parsed_entries.each do |entry|
       recipe = recipes_by_id[entry["recipe_id"]&.to_i]
 
-      nutrition_entry = NutritionEntry.create!(
+      nutrition_entry = entries.create!(
         logged_on: @date,
         raw_input: raw_input,
         item: entry["item"].to_s.presence || "Unknown item",

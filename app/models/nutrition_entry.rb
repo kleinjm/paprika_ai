@@ -16,12 +16,19 @@
 #  sugar         :decimal(6, 1)
 #  created_at    :datetime         not null
 #  updated_at    :datetime         not null
+#  user_id       :bigint
 #
 # Indexes
 #
 #  index_nutrition_entries_on_logged_on  (logged_on)
+#  index_nutrition_entries_on_user_id    (user_id)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (user_id => users.id)
 #
 class NutritionEntry < ApplicationRecord
+  belongs_to :user
   has_many :nutrition_entry_recipes, dependent: :destroy
 
   validates :item, presence: true

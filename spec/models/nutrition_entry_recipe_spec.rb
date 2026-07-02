@@ -20,7 +20,8 @@ require "rails_helper"
 #  fk_rails_...  (nutrition_entry_id => nutrition_entries.id)
 #
 RSpec.describe NutritionEntryRecipe do
-  let(:entry) { NutritionEntry.create!(logged_on: Date.current, item: "chili") }
+  let(:user) { User.create!(email: "join@example.com", password: "password") }
+  let(:entry) { NutritionEntry.create!(user: user, logged_on: Date.current, item: "chili") }
 
   describe "validations" do
     it "requires a recipe_id" do

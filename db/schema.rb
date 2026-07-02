@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_01_000003) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_01_235500) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -28,7 +28,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_01_000003) do
     t.decimal "fiber", precision: 6, scale: 1
     t.decimal "saturated_fat", precision: 6, scale: 1
     t.decimal "sugar", precision: 6, scale: 1
+    t.bigint "user_id"
     t.index ["logged_on"], name: "index_nutrition_entries_on_logged_on"
+    t.index ["user_id"], name: "index_nutrition_entries_on_user_id"
   end
 
   create_table "nutrition_entry_recipes", force: :cascade do |t|
@@ -40,5 +42,18 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_01_000003) do
     t.index ["nutrition_entry_id"], name: "index_nutrition_entry_recipes_on_nutrition_entry_id"
   end
 
+  create_table "users", force: :cascade do |t|
+    t.string "email", default: "", null: false
+    t.string "encrypted_password", default: "", null: false
+    t.string "reset_password_token"
+    t.datetime "reset_password_sent_at"
+    t.datetime "remember_created_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["email"], name: "index_users_on_email", unique: true
+    t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
+  end
+
+  add_foreign_key "nutrition_entries", "users"
   add_foreign_key "nutrition_entry_recipes", "nutrition_entries"
 end

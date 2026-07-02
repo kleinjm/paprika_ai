@@ -8,7 +8,20 @@ RSpec.describe "Nutrition", type: :request do
     allow(Paprika::Recipe).to receive(:not_trashed_excluding).and_return(other_recipes)
   end
 
-  before { stub_paprika }
+  let(:user) { User.create!(email: "test@example.com", password: "password") }
+
+  before do
+    stub_paprika
+    sign_in user
+  end
+
+  describe "authentication" do
+    it "redirects to the login page when signed out" do
+      sign_out user
+      get nutrition_path
+      expect(response).to redirect_to(new_user_session_path)
+    end
+  end
 
   describe "GET /nutrition" do
     it "renders the tracking page for today" do
@@ -42,8 +55,8 @@ RSpec.describe "Nutrition", type: :request do
 
   describe "GET /nutrition/history" do
     it "renders a row per logged day with totals" do
-      NutritionEntry.create!(logged_on: Date.new(2026, 6, 28), item: "eggs", calories: 150, protein: 12)
-      NutritionEntry.create!(logged_on: Date.new(2026, 6, 29), item: "banana", calories: 100, protein: 1)
+      user.nutrition_entries.create!(logged_on: Date.new(2026, 6, 28), item: "eggs", calories: 150, protein: 12)
+      user.nutrition_entries.create!(logged_on: Date.new(2026, 6, 29), item: "banana", calories: 100, protein: 1)
 
       get nutrition_history_path
 
@@ -104,8 +117,8 @@ RSpec.describe "Nutrition", type: :request do
     end
 
     context "deleting entries" do
-      let!(:entry) { NutritionEntry.create!(logged_on: Date.new(2026, 6, 29), item: "banana", calories: 100) }
-      let!(:other) { NutritionEntry.create!(logged_on: Date.new(2026, 6, 29), item: "eggs", calories: 150) }
+      let!(:entry) { user.nutrition_entries.create!(logged_on: Date.new(2026, 6, 29), item: "banana", calories: 100) }
+      let!(:other) { user.nutrition_entries.create!(logged_on: Date.new(2026, 6, 29), item: "eggs", calories: 150) }
 
       it "removes a single entry and responds with a turbo stream" do
         expect do
@@ -133,7 +146,7 @@ RSpec.describe "Nutrition", type: :request do
 
     context "editing an entry" do
       let!(:entry) do
-        NutritionEntry.create!(logged_on: Date.new(2026, 6, 29), item: "banana", calories: 100, protein: 1)
+        user.nutrition_entries.create!(logged_on: Date.new(2026, 6, 29), item: "banana", calories: 100, protein: 1)
       end
 
       it "renders the edit form" do

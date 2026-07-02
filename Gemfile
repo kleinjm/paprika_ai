@@ -10,8 +10,12 @@ gem "pg", "~> 1.1"
 gem "sqlite3", "~> 2.1"
 # tsort is used by Rails internals but is no longer a default gem in Ruby 4.1+
 gem "tsort"
+# net-imap >= 0.6 fixes a Ractor::IsolationError on Ruby 4.0 during eager load
+gem "net-imap", ">= 0.6"
 # Use OpenAI for ChatGPT integration
 gem "ruby-openai", "~> 5.0"
+# Authentication
+gem "devise"
 # Use the Puma web server [https://github.com/puma/puma]
 gem "puma", ">= 5.0"
 # Use JavaScript with ESM import maps [https://github.com/rails/importmap-rails]

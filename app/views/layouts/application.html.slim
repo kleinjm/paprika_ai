@@ -17,4 +17,8 @@ html
     = javascript_importmap_tags
   body
     .container.py-4
+      - if notice
+        .alert.alert-success = notice
+      - if alert
+        .alert.alert-danger = alert
       = yield

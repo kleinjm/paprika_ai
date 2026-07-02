@@ -18,12 +18,20 @@ require "rails_helper"
 #  sugar         :decimal(6, 1)
 #  created_at    :datetime         not null
 #  updated_at    :datetime         not null
+#  user_id       :bigint
 #
 # Indexes
 #
 #  index_nutrition_entries_on_logged_on  (logged_on)
+#  index_nutrition_entries_on_user_id    (user_id)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (user_id => users.id)
 #
 RSpec.describe NutritionEntry do
+  let(:user) { User.create!(email: "model@example.com", password: "password") }
+
   describe "validations" do
     it "requires an item and a logged_on date" do
       entry = described_class.new
@@ -35,7 +43,7 @@ RSpec.describe NutritionEntry do
 
   describe "#recipes" do
     it "loads the linked Paprika recipes by their ids" do
-      entry = described_class.create!(logged_on: Date.current, item: "chili")
+      entry = described_class.create!(user: user, logged_on: Date.current, item: "chili")
       entry.nutrition_entry_recipes.create!(recipe_id: 42)
       entry.nutrition_entry_recipes.create!(recipe_id: 7)
 
@@ -49,9 +57,9 @@ RSpec.describe NutritionEntry do
   describe ".for_day" do
     it "returns only entries logged on the given date, oldest first" do
       today = Date.new(2026, 6, 29)
-      a = described_class.create!(logged_on: today, item: "eggs", calories: 150)
-      described_class.create!(logged_on: today - 1, item: "old", calories: 99)
-      b = described_class.create!(logged_on: today, item: "banana", calories: 100)
+      a = described_class.create!(user: user, logged_on: today, item: "eggs", calories: 150)
+      described_class.create!(user: user, logged_on: today - 1, item: "old", calories: 99)
+      b = described_class.create!(user: user, logged_on: today, item: "banana", calories: 100)
 
       expect(described_class.for_day(today)).to eq([a, b])
     end
@@ -60,11 +68,11 @@ RSpec.describe NutritionEntry do
   describe ".totals_for" do
     it "sums each nutrient across the day" do
       day = Date.new(2026, 6, 29)
-      described_class.create!(logged_on: day, item: "a", calories: 600, protein: 45, carbs: 30, fat: 20,
+      described_class.create!(user: user, logged_on: day, item: "a", calories: 600, protein: 45, carbs: 30, fat: 20,
                               fiber: 8, saturated_fat: 5, sugar: 4)
-      described_class.create!(logged_on: day, item: "b", calories: 150, protein: 12, carbs: 1, fat: 10,
+      described_class.create!(user: user, logged_on: day, item: "b", calories: 150, protein: 12, carbs: 1, fat: 10,
                               fiber: 2, saturated_fat: 3, sugar: 1)
-      described_class.create!(logged_on: day - 1, item: "other", calories: 999, protein: 99)
+      described_class.create!(user: user, logged_on: day - 1, item: "other", calories: 999, protein: 99)
 
       totals = described_class.totals_for(day)
 
@@ -86,9 +94,9 @@ RSpec.describe NutritionEntry do
 
   describe ".daily_totals" do
     it "returns one summed row per day, most recent first" do
-      described_class.create!(logged_on: Date.new(2026, 6, 28), item: "a", calories: 100, protein: 10)
-      described_class.create!(logged_on: Date.new(2026, 6, 29), item: "b", calories: 200, protein: 20)
-      described_class.create!(logged_on: Date.new(2026, 6, 29), item: "c", calories: 50, protein: 5)
+      described_class.create!(user: user, logged_on: Date.new(2026, 6, 28), item: "a", calories: 100, protein: 10)
+      described_class.create!(user: user, logged_on: Date.new(2026, 6, 29), item: "b", calories: 200, protein: 20)
+      described_class.create!(user: user, logged_on: Date.new(2026, 6, 29), item: "c", calories: 50, protein: 5)
 
       days = described_class.daily_totals
 
