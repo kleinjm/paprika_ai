@@ -1,0 +1,32 @@
+div
+  .row.justify-content-center
+    .col-lg-6
+      h1.display-5.mb-4 Profile
+
+      .card.shadow-sm.mb-4
+        .card-body
+          .mb-2
+            .text-muted.small Email
+            .h5.mb-0 = current_user.email
+
+      .card.shadow-sm
+        .card-header.d-flex.justify-content-between.align-items-center
+          h2.h5.mb-0 Nutrition Goals
+          = link_to "Edit Nutrition Goals", edit_nutrition_goals_path, class: "btn btn-sm btn-warning"
+        .card-body
+          - if @settings&.calorie_goal || @settings&.protein_goal || @settings&.carbs_goal || @settings&.fat_goal
+            .row.text-center
+              .col
+                .h4.mb-0 = @settings.calorie_goal || "—"
+                .text-muted.small Calories
+              .col
+                .h4.mb-0 = @settings.protein_goal ? "#{@settings.protein_goal}g" : "—"
+                .text-muted.small Protein
+              .col
+                .h4.mb-0 = @settings.carbs_goal ? "#{@settings.carbs_goal}g" : "—"
+                .text-muted.small Carbs
+              .col
+                .h4.mb-0 = @settings.fat_goal ? "#{@settings.fat_goal}g" : "—"
+                .text-muted.small Fat
+          - else
+            p.text-muted.mb-0 No goals set yet.

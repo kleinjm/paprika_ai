@@ -16,6 +16,15 @@ html
     = stylesheet_link_tag :app, "data-turbo-track": "reload"
     = javascript_importmap_tags
   body
+    nav.navbar.navbar-expand.navbar-dark.bg-dark
+      .container-fluid
+        = link_to "Paprika AI", root_path, class: "navbar-brand"
+        - if user_signed_in?
+          ul.navbar-nav.ms-auto
+            li.nav-item
+              = link_to "Profile", profile_path, class: "nav-link"
+            li.nav-item
+              = link_to "Log Out", destroy_user_session_path, class: "nav-link", data: { turbo_method: :delete }
     .container.py-4
       - if notice
         .alert.alert-success = notice

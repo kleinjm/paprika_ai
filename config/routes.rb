@@ -22,6 +22,10 @@ Rails.application.routes.draw do
   # Fallback so `root_path` resolves; home#index still requires authentication.
   root "home#index"
 
+  get "profile" => "profiles#show", as: :profile
+  get "profile/nutrition_goals/edit" => "user_settings#edit", as: :edit_nutrition_goals
+  patch "profile/nutrition_goals" => "user_settings#update", as: :nutrition_goals
+
   get "nutrition" => "nutrition#show", as: :nutrition
   get "nutrition/history" => "nutrition#history", as: :nutrition_history
   post "nutrition/log" => "nutrition#log", as: :nutrition_log
