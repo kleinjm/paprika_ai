@@ -43,6 +43,17 @@ RSpec.describe "Nutrition", type: :request do
       expect(response.body).not_to include("Freeform note")
     end
 
+    it "shows each nutrient against its goal with the remaining difference" do
+      user.create_settings!(calorie_goal: 2000, protein_goal: 100, carbs_goal: 200, fat_goal: 70)
+      user.nutrition_entries.create!(logged_on: Date.current, item: "x", calories: 1500, protein: 120)
+
+      get nutrition_path
+
+      expect(response.body).to include("1500 / 2000")
+      expect(response.body).to include("500 left")   # calories under goal
+      expect(response.body).to include("20g over")   # protein over goal
+    end
+
     it "renders a dropdown option for each other recipe" do
       stub_paprika(other_recipes: [ double(id: 7, name: "Zuppa Toscana") ])
 

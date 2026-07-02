@@ -14,7 +14,7 @@ div
           h2.h5.mb-0 #{@date.strftime('%A, %B %-d, %Y')}
         .card-body
           #nutrition_totals
-            = render partial: "totals", locals: { totals: @totals }
+            = render partial: "totals", locals: { totals: @totals, goals: @goals }
 
       .card.shadow-sm.mb-4
         .card-body

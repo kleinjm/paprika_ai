@@ -6,6 +6,7 @@ class NutritionController < ApplicationController
     @date = parse_date(params[:date])
     @entries = entries.for_day(@date)
     @totals = entries.totals_for(@date)
+    @goals = current_user.settings
     load_recipe_choices
   end
 
@@ -25,6 +26,7 @@ class NutritionController < ApplicationController
 
     @entries = entries.for_day(@date)
     @totals = entries.totals_for(@date)
+    @goals = current_user.settings
     load_recipe_choices
 
     respond_to do |format|
@@ -83,6 +85,7 @@ class NutritionController < ApplicationController
   def render_day_update
     @entries = entries.for_day(@date)
     @totals = entries.totals_for(@date)
+    @goals = current_user.settings
 
     respond_to do |format|
       format.turbo_stream { render :log }

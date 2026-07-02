@@ -1,6 +1,6 @@
 = turbo_stream.replace "nutrition_totals" do
   #nutrition_totals
-    = render partial: "totals", locals: { totals: @totals }
+    = render partial: "totals", locals: { totals: @totals, goals: @goals }
 
 = turbo_stream.replace "nutrition_reply" do
   #nutrition_reply.mb-3
