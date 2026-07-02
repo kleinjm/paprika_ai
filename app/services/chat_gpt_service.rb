@@ -11,7 +11,6 @@ class ChatGptService
         temperature: 0.7
       }
     )
-    binding.pry
     response.dig("choices", 0, "message", "content")
   end
 
