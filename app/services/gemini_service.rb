@@ -48,7 +48,7 @@ class GeminiService
     client = Gemini.new(
       credentials: {
         service: "generative-language-api",
-        api_key: ENV["GEMINI_API_KEY"]
+        api_key: Rails.application.credentials.dig(:google, :gemini, :api_key)
       },
       options: { model: model }
     )

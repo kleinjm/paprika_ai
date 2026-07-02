@@ -16,6 +16,8 @@ gem "net-imap", ">= 0.6"
 gem "ruby-openai", "~> 5.0"
 # Authentication
 gem "devise"
+# Organize seed data into db/seeds/*.seeds.rb files
+gem "seedbank"
 # Use the Puma web server [https://github.com/puma/puma]
 gem "puma", ">= 5.0"
 # Use JavaScript with ESM import maps [https://github.com/rails/importmap-rails]
@@ -26,8 +28,6 @@ gem "turbo-rails"
 gem "stimulus-rails"
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
 gem "jbuilder"
-# Load environment variables from .env file
-gem "dotenv-rails"
 
 # Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
 # gem "bcrypt", "~> 3.1.7"
@@ -66,6 +66,7 @@ group :development, :test do
   gem "rubocop-rails-omakase", require: false
   gem "pry-rails"
   gem "rspec-rails", "~> 7.1"
+  gem "pry-coolline"
 end
 
 group :development do

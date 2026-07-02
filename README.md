@@ -206,15 +206,30 @@ cd paprika_ai
 bundle install
 ```
 
-3. Set up environment variables:
+3. Set up secrets via Rails credentials:
+
+Secrets live in Rails' encrypted **development** credentials (not `.env`). Edit them with:
 ```bash
-cp .env.example .env
+bin/rails credentials:edit --environment development
 ```
-Edit `.env` and add your API keys / settings:
-- `GEMINI_API_KEY` (required for Gemini features)
-- `OPENAI_API_KEY` (optional, for ChatGPT features)
+Use this structure:
+```yaml
+user:              # seeded local login (see db/seeds/users.seeds.rb)
+  email:
+  password:
+google:
+  gemini:
+    api_key:       # required for Gemini AI features
+openai:
+  chat_gpt:
+    api_key:       # optional, for ChatGPT features
+```
+This creates `config/credentials/development.yml.enc` and `config/credentials/development.key`. The `.key` is git-ignored — keep it safe and share it out-of-band with collaborators.
+
+Non-secret runtime toggles remain environment variables:
 - `GEMINI_MODEL` (optional) — preferred model, tried before the built-in fallback chain
 - `NUTRITION_WRITEBACK` (optional) — `read_write` (default) or `read_only` to disable writing nutrition back to Paprika
+- `PAPRIKA_DATABASE_PATH` / `PAPRIKA_READONLY` (optional) — override the Paprika SQLite location (used by CI)
 
 4. Configure database:
 The app reads from your local Paprika Recipe Manager SQLite database. Update the path in `config/database.yml` if needed:

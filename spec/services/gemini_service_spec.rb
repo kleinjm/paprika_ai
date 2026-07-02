@@ -1,5 +1,4 @@
-require "spec_helper"
-require_relative "../../app/services/gemini_service"
+require "rails_helper"
 
 RSpec.describe GeminiService do
   let(:client) { double("Gemini::Client") }
@@ -14,7 +13,11 @@ RSpec.describe GeminiService do
     { "candidates" => [ { "content" => { "parts" => [ { "text" => text } ] } } ] }
   end
 
-  before { allow(Gemini).to receive(:new).and_return(client) }
+  before do
+    allow(Gemini).to receive(:new).and_return(client)
+    # Avoid decrypting credentials (CI has no master key); the key value is unused here.
+    allow(Rails.application.credentials).to receive(:dig).with(:google, :gemini, :api_key).and_return("test-key")
+  end
 
   describe "#generate_content" do
     it "passes the prompt through and returns the first candidate's text" do

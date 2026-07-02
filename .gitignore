@@ -41,3 +41,5 @@
 
 # SimpleCov output
 /coverage
+
+/config/credentials/development.key

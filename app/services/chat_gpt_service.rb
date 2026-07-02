@@ -1,5 +1,5 @@
 class ChatGptService
-  def initialize(api_key = ENV["OPENAI_API_KEY"])
+  def initialize(api_key = Rails.application.credentials.dig(:openai, :chat_gpt, :api_key))
     @client = OpenAI::Client.new(access_token: api_key)
   end
 

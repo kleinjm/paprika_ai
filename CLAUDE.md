@@ -72,7 +72,7 @@ bundle exec rubocop  # Ruby linting
 - `MealPlanForm`: Form object for building meal plan prompts with categories and constraints
 
 ### AI Integration
-The application uses Google Gemini API (gemini-2.0-flash model) as the primary AI service. The API key must be set in the `GEMINI_API_KEY` environment variable.
+The application uses the Google Gemini API as the primary AI service, via `GeminiService`, which tries a fallback chain of models on transient errors. The API key is read from Rails development credentials at `google.gemini.api_key` (`bin/rails credentials:edit --environment development`).
 
 ### CSS/JS Architecture
 - Uses Bootstrap 5.3 with SASS compilation
