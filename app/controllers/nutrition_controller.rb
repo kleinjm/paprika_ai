@@ -14,14 +14,22 @@ class NutritionController < ApplicationController
     @date = parse_date(params[:date])
     message = params[:message].to_s.strip
 
-    if message.blank?
+    recipes = selected_recipes
+    direct = direct_log_entries(message, recipes)
+
+    if direct
+      # Just recipe pills with locally-known nutrition — log straight from the
+      # stored data without calling the LLM.
+      persist_direct(direct, message)
+      @reply = "Logged #{direct.map { |recipe, _| recipe.name }.join(', ')} from saved nutrition."
+    elsif message.blank?
       @reply = "Tell me what you ate and I'll log it."
     else
-      recipes = selected_recipes
       result = NutritionParser.new.parse(message, recipes: recipes)
       persist_entries(result.entries, message, recipes)
       @reply = result.reply
-      @reply += "\n\nThese recipes need more nutrition data: #{result.needs_data.join(', ')}." if result.needs_data.present?
+      needs = incomplete_verified_recipes(result.entries, recipes)
+      @reply += "\n\nThese recipes need more nutrition data: #{needs.join(', ')}." if needs.any?
       @llm_error = result.error
     end
 
@@ -131,18 +139,19 @@ class NutritionController < ApplicationController
 
     parsed_entries.each do |entry|
       recipe = recipes_by_id[entry["recipe_id"]&.to_i]
+      macros = verified_portion(recipe, entry) || entry
 
       nutrition_entry = entries.create!(
         logged_on: @date,
         raw_input: raw_input,
         item: entry["item"].to_s.presence || "Unknown item",
-        calories: entry["calories"],
-        protein: entry["protein"],
-        carbs: entry["carbs"],
-        fat: entry["fat"],
-        fiber: entry["fiber"],
-        saturated_fat: entry["saturated_fat"],
-        sugar: entry["sugar"],
+        calories: macros["calories"],
+        protein: macros["protein"],
+        carbs: macros["carbs"],
+        fat: macros["fat"],
+        fiber: macros["fiber"],
+        saturated_fat: macros["saturated_fat"],
+        sugar: macros["sugar"],
         recipe_match: recipe&.name
       )
 
@@ -153,11 +162,82 @@ class NutritionController < ApplicationController
     end
   end
 
+  # When the matched recipe has hand-Verified nutrition, compute the eaten
+  # portion deterministically from the label (LLM only supplies the fraction).
+  def verified_portion(recipe, entry)
+    return nil unless recipe && VerifiedNutrition.verified?(recipe.nutritional_info)
+
+    fraction = entry["recipe_fraction"]
+    return nil if fraction.blank?
+
+    label = VerifiedNutrition.parse(recipe.nutritional_info)
+    VerifiedNutrition::NUTRIENTS.to_h do |nutrient|
+      value = label[nutrient]
+      [ nutrient.to_s, value && (value * fraction.to_f).round ]
+    end
+  end
+
+  # Names of referenced Verified recipes that are missing some nutrients.
+  def incomplete_verified_recipes(parsed_entries, recipes)
+    recipes_by_id = recipes.index_by(&:id)
+    ids = parsed_entries.filter_map { |entry| entry["recipe_id"]&.to_i }.uniq
+    ids.filter_map do |id|
+      recipe = recipes_by_id[id]
+      next unless recipe && VerifiedNutrition.verified?(recipe.nutritional_info)
+
+      recipe.name if VerifiedNutrition.missing(recipe.nutritional_info).any?
+    end
+  end
+
+  # If the message is only recipe pill names (no extra text) and every selected
+  # recipe already has locally-known nutrition (Verified or AI Generated), return
+  # [recipe, nutrients] pairs so we can log without the LLM. Otherwise nil.
+  def direct_log_entries(message, recipes)
+    return nil if recipes.none? || !only_recipe_names?(message, recipes)
+
+    pairs = recipes.map { |recipe| [ recipe, local_nutrition(recipe) ] }
+    pairs unless pairs.any? { |_recipe, nutrients| nutrients.nil? }
+  end
+
+  def only_recipe_names?(message, recipes)
+    leftover = message.to_s.dup
+    recipes.each { |recipe| leftover = leftover.sub(/#{Regexp.escape(recipe.name)}/i, "") }
+    leftover.gsub(/[^a-z0-9]/i, "").blank?
+  end
+
+  # Parsed nutrients for a recipe whose field is Verified or AI-Generated, else nil.
+  def local_nutrition(recipe)
+    info = recipe.nutritional_info.to_s
+    return nil unless VerifiedNutrition.verified?(info) || info.strip.start_with?(NutritionSkill::HEADER_PREFIX)
+
+    VerifiedNutrition.parse(info)
+  end
+
+  def persist_direct(pairs, raw_input)
+    pairs.each do |recipe, nutrients|
+      entry = entries.create!(
+        logged_on: @date,
+        raw_input: raw_input,
+        item: recipe.name,
+        calories: nutrients[:calories]&.round,
+        protein: nutrients[:protein]&.round,
+        carbs: nutrients[:carbs]&.round,
+        fat: nutrients[:fat]&.round,
+        fiber: nutrients[:fiber]&.round,
+        saturated_fat: nutrients[:saturated_fat]&.round,
+        sugar: nutrients[:sugar]&.round,
+        recipe_match: recipe.name
+      )
+      entry.nutrition_entry_recipes.create!(recipe_id: recipe.id)
+    end
+  end
+
   # Overwrite the matched recipe's nutrition field with the AI's validated batch
   # macros in the current versioned format, standardizing (and backfilling) it —
-  # unless the skill is in read-only mode.
+  # unless the skill is read-only or the recipe is hand-Verified (never touched).
   def write_batch_macros(recipe, batch)
     return unless NutritionSkill.write_enabled?
+    return if VerifiedNutrition.verified?(recipe.nutritional_info)
     return if batch.blank?
 
     standardized = NutritionSkill.format(batch)

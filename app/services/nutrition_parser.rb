@@ -3,7 +3,7 @@ require "json"
 # Turns a plain-English description of what the user ate into structured macro
 # entries, seeding the LLM with the user's Paprika recipes as reference.
 class NutritionParser
-  Result = Struct.new(:entries, :reply, :error, :needs_data, keyword_init: true)
+  Result = Struct.new(:entries, :reply, :error, keyword_init: true)
 
   SYSTEM_PROMPT = <<~PROMPT.freeze
     You are a macro-tracking assistant for someone trying to put on muscle, so
@@ -20,11 +20,10 @@ class NutritionParser
       the whole recipe, then the portion they actually ate. A recipe may include
       existing "nutritional_info":
         * VERIFIED DATA: If nutritional_info starts with the word "Verified", it
-          was entered by hand from a nutrition label. TRUST IT COMPLETELY — do NOT
-          estimate or recompute. Use those numbers directly. Set "batch_macros" to
-          null so the stored data is left untouched. If a verified recipe is
-          MISSING any of calories/protein/carbs/fat/fiber/saturated_fat/sugar, add
-          the recipe's name to the top-level "needs_data" list.
+          was entered by hand from a nutrition label and the app will apply those
+          numbers itself. Do NOT estimate its macros. Set "batch_macros" to null.
+          Just return "recipe_fraction": the fraction of the WHOLE recipe eaten
+          (e.g. 0.25 for a quarter, ~0.2 for one bowl of a five-bowl pot).
         * OTHERWISE: Treat nutritional_info as UNTRUSTED — internet recipes often
           have wrong data. Sanity-check against the ingredients; if it looks wrong
           or is missing, compute the batch macros from the ingredients. Return the
@@ -40,10 +39,10 @@ class NutritionParser
           "calories": int, "protein": int, "carbs": int, "fat": int,
           "fiber": int, "saturated_fat": int, "sugar": int,
           "recipe_id": int (the "id" of the matched recipe from the reference list) or null,
+          "recipe_fraction": float fraction of the whole recipe eaten (home cooking) or null,
           "batch_macros": { "calories": int, "protein": int, "carbs": int, "fat": int, "fiber": int, "saturated_fat": int, "sugar": int } or null
         }
       ],
-      "needs_data": [ "names of Verified recipes missing some nutrients" ],
       "reply": "a short friendly confirmation of what you logged and the day's running totals"
     }
 
@@ -52,7 +51,7 @@ class NutritionParser
 
     Only set "recipe_id" and "batch_macros" for HOME COOKING items that matched
     one of the provided reference recipes; use the recipe's exact "id". For
-    anything not in the reference list, set both to null. Set "batch_macros" to
+    anything not in the reference list, set them to null. Set "batch_macros" to
     null for Verified recipes. Round all numbers to integers.
   PROMPT
 
@@ -111,8 +110,7 @@ class NutritionParser
     data = JSON.parse(json)
     Result.new(
       entries: Array(data["entries"]),
-      reply: data["reply"].presence || "Logged.",
-      needs_data: Array(data["needs_data"])
+      reply: data["reply"].presence || "Logged."
     )
   rescue JSON::ParserError
     Result.new(entries: [], reply: "Sorry, I couldn't read that. Please try rephrasing what you ate.", error: true)

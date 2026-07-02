@@ -286,22 +286,6 @@ RSpec.describe "Nutrition", type: :request do
                                  as: :turbo_stream
       end
 
-      it "leaves verified recipes untouched and flags missing nutrition data" do
-        verified = instance_double(Paprika::Recipe, id: 42, name: "Chili", nutritional_info: "Verified\nCalories: 500")
-        allow(Paprika::Recipe).to receive(:where).with(Z_PK: [ 42 ]).and_return([ verified ])
-        allow(NutritionParser).to receive(:new).and_return(instance_double(NutritionParser, parse:
-          NutritionParser::Result.new(
-            entries: [ { "item" => "1/4 chili", "calories" => 125, "protein" => 10, "recipe_id" => 42, "batch_macros" => nil } ],
-            reply: "Logged.", needs_data: [ "Chili" ]
-          )))
-
-        expect(verified).not_to receive(:update_nutritional_info!)
-
-        post nutrition_log_path, params: { message: "1/4 chili", recipe_ids: [ 42 ] }, as: :turbo_stream
-
-        expect(response.body).to include("These recipes need more nutrition data: Chili")
-      end
-
       it "still logs the entry when writing back to Paprika fails" do
         allow(chili).to receive(:update_nutritional_info!).and_raise(StandardError, "db locked")
         allow(salad).to receive(:update_nutritional_info!)
@@ -313,6 +297,90 @@ RSpec.describe "Nutrition", type: :request do
         end.to change(NutritionEntry, :count).by(2)
 
         expect(Rails.logger).to have_received(:warn).with(/Failed to write batch macros for Chili/)
+      end
+    end
+  end
+
+  describe "POST /nutrition/log — no-LLM and verified paths" do
+    def stub_selected(recipe)
+      allow(Paprika::Recipe).to receive(:where).with(Z_PK: [ recipe.id ]).and_return([ recipe ])
+    end
+
+    it "logs directly from a Verified recipe without calling the LLM" do
+      recipe = instance_double(Paprika::Recipe, id: 569, name: "Eggs And Beans",
+        nutritional_info: "Verified\nCalories: 298\nProtein: 24\nCarbohydrates: 32\nFat: 5\nFiber: 7\nSaturated Fat: 2\nSugar: 2")
+      stub_selected(recipe)
+      expect(NutritionParser).not_to receive(:new)
+
+      expect do
+        post nutrition_log_path, params: { message: "Eggs And Beans", recipe_ids: [ 569 ] }, as: :turbo_stream
+      end.to change(NutritionEntry, :count).by(1)
+
+      entry = NutritionEntry.last
+      expect(entry.item).to eq("Eggs And Beans")
+      expect(entry.calories).to eq(298)
+      expect(entry.protein).to eq(24)
+      expect(entry.nutrition_entry_recipes.pluck(:recipe_id)).to eq([ 569 ])
+      expect(response.body).to include("from saved nutrition")
+    end
+
+    it "logs directly from an AI-generated block without the LLM" do
+      recipe = instance_double(Paprika::Recipe, id: 8, name: "Batch Chili",
+        nutritional_info: "Meal Total (AI Generated - 7/2/26)\nCalories: 2400 kcal\nProtein: 180 g\nCarbohydrates: 120 g\nFat: 80 g\nFiber: 40 g\nSaturated Fat: 25 g\nSugar: 30 g")
+      stub_selected(recipe)
+      expect(NutritionParser).not_to receive(:new)
+
+      post nutrition_log_path, params: { message: "Batch Chili", recipe_ids: [ 8 ] }, as: :turbo_stream
+
+      expect(NutritionEntry.last.calories).to eq(2400)
+    end
+
+    it "falls back to the LLM when a named recipe has no local nutrition" do
+      recipe = instance_double(Paprika::Recipe, id: 9, name: "Mystery Stew", nutritional_info: nil)
+      stub_selected(recipe)
+      parser = instance_double(NutritionParser, parse:
+        NutritionParser::Result.new(entries: [], reply: "Hmm."))
+      expect(NutritionParser).to receive(:new).and_return(parser)
+
+      post nutrition_log_path, params: { message: "Mystery Stew", recipe_ids: [ 9 ] }, as: :turbo_stream
+    end
+
+    context "Verified recipe via the LLM (with a fraction)" do
+      let(:recipe) do
+        instance_double(Paprika::Recipe, id: 42, name: "Chili",
+          nutritional_info: "Verified\nCalories: 800\nProtein: 40")
+      end
+
+      before { stub_selected(recipe) }
+
+      it "scales the label by the fraction, never overwrites, and flags missing data" do
+        allow(NutritionParser).to receive(:new).and_return(instance_double(NutritionParser, parse:
+          NutritionParser::Result.new(
+            entries: [ { "item" => "half the chili", "calories" => 999, "recipe_id" => 42,
+                         "recipe_fraction" => 0.5, "batch_macros" => nil } ],
+            reply: "Logged."
+          )))
+        expect(recipe).not_to receive(:update_nutritional_info!)
+
+        post nutrition_log_path, params: { message: "half the chili", recipe_ids: [ 42 ] }, as: :turbo_stream
+
+        entry = NutritionEntry.last
+        expect(entry.calories).to eq(400) # 800 * 0.5 from the label, not the LLM's 999
+        expect(entry.protein).to eq(20)
+        expect(response.body).to include("These recipes need more nutrition data: Chili")
+      end
+
+      it "uses the LLM macros when no fraction is given" do
+        allow(NutritionParser).to receive(:new).and_return(instance_double(NutritionParser, parse:
+          NutritionParser::Result.new(
+            entries: [ { "item" => "some chili", "calories" => 123, "recipe_id" => 42,
+                         "recipe_fraction" => nil, "batch_macros" => nil } ],
+            reply: "Logged."
+          )))
+
+        post nutrition_log_path, params: { message: "some chili", recipe_ids: [ 42 ] }, as: :turbo_stream
+
+        expect(NutritionEntry.last.calories).to eq(123)
       end
     end
   end
