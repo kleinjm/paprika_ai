@@ -1,60 +1,14 @@
-# == Schema Information
-#
-# Table name: ZRECIPE
-#
-#  ZCOOKTIME            :string
-#  ZCREATED             :datetime
-#  ZDESCRIPTIONTEXT     :string
-#  ZDIFFICULTY          :string
-#  ZDIRECTIONS          :string
-#  ZIMAGEURL            :string
-#  ZINGREDIENTS         :string
-#  ZINTRASH             :integer
-#  ZISPINNED            :integer
-#  ZISSYNCED            :integer
-#  ZNAME                :string
-#  ZNOTES               :string
-#  ZNUTRITIONALINFO     :string
-#  ZONFAVORITES         :integer
-#  ZPHOTO               :string
-#  ZPHOTOHASH           :string
-#  ZPHOTOISDOWNLOADED   :integer
-#  ZPHOTOISUPLOADED     :integer
-#  ZPHOTOLARGE          :string
-#  ZPREPTIME            :string
-#  ZRATING              :integer
-#  ZSCALE               :string
-#  ZSELECTEDDIRECTION   :string
-#  ZSELECTEDINGREDIENTS :string
-#  ZSERVINGS            :string
-#  ZSOURCE              :string
-#  ZSOURCEURL           :string
-#  ZSTATUS              :string
-#  ZSYNCHASH            :string
-#  ZTOTALTIME           :string
-#  ZUID                 :string
-#  Z_ENT                :integer
-#  Z_OPT                :integer
-#  Z_PK                 :integer          primary key
-#
-# Indexes
-#
-#  Z_Recipe_byCreatedIndex  (ZCREATED)
-#  Z_Recipe_byNameIndex     (ZNAME)
-#  Z_Recipe_byRatingIndex   (ZRATING)
-#  Z_Recipe_byUidIndex      (ZUID)
-#
 module Paprika
+  # Local mirror of a Paprika recipe (table "ZRECIPE", keyed by Z_PK). Populated
+  # from the Paprika cloud via `paprika:pull`. Nutrition edits are written back
+  # to the cloud through PaprikaCloud.
   class Recipe < ApplicationRecord
     self.table_name = "ZRECIPE"
 
-    attribute :name, :string
+    alias_attribute :uid, :ZUID
     alias_attribute :name, :ZNAME
-    attribute :ingredients, :string
     alias_attribute :ingredients, :ZINGREDIENTS
-    attribute :directions, :string
     alias_attribute :directions, :ZDIRECTIONS
-    attribute :nutritional_info, :string
     alias_attribute :nutritional_info, :ZNUTRITIONALINFO
 
     # Paprika marks trashed recipes with ZINTRASH = 1; live recipes are 0 (or NULL).
@@ -67,10 +21,6 @@ module Paprika
     # This the actual categories for a recipe.
     has_many :recipe_categories, class_name: "Paprika::RecipeCategory", through: :categories
 
-    has_many :recipe_photos, class_name: "Paprika::RecipePhoto", foreign_key: "ZRECIPE"
-    has_many :menu_items, class_name: "Paprika::MenuItem", foreign_key: "ZRECIPE"
-    has_many :menus, through: :menu_items, class_name: "Paprika::Menu"
-
     def to_ai_json
       {
         name: name,
@@ -80,15 +30,11 @@ module Paprika
       }
     end
 
-    # Persist AI-computed batch macros into the Paprika nutrition field using the
-    # writable connection. Writes via Z_PK so it works on read-only model instances.
+    # Persist AI-computed batch macros: update the local mirror and write the
+    # value back to the Paprika cloud so it syncs to all devices.
     def update_nutritional_info!(text)
-      Paprika::WritableApplicationRecord.connection.exec_update(
-        ActiveRecord::Base.sanitize_sql(
-          [ "UPDATE ZRECIPE SET ZNUTRITIONALINFO = ? WHERE Z_PK = ?", text, id ]
-        ),
-        "Paprika Nutrition Update"
-      )
+      update!(ZNUTRITIONALINFO: text)
+      PaprikaCloud.push_nutritional_info(uid: uid, text: text)
     end
   end
 end

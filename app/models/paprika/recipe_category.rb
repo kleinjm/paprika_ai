@@ -22,7 +22,6 @@ module Paprika
   class RecipeCategory < ApplicationRecord
     self.table_name = "ZRECIPECATEGORY"
 
-    attribute :name, :string
     alias_attribute :name, :ZNAME
 
     has_many :categories, class_name: "Paprika::Category", foreign_key: "Z_12CATEGORIES"

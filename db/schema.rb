@@ -10,9 +10,51 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_02_190000) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_02_232003) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "ZRECIPE", primary_key: "Z_PK", force: :cascade do |t|
+    t.string "ZUID", null: false
+    t.string "ZSYNCHASH"
+    t.string "ZNAME"
+    t.text "ZINGREDIENTS"
+    t.text "ZDIRECTIONS"
+    t.text "ZNUTRITIONALINFO"
+    t.text "ZNOTES"
+    t.text "ZDESCRIPTIONTEXT"
+    t.integer "ZINTRASH", default: 0
+    t.integer "ZRATING"
+    t.string "ZSERVINGS"
+    t.string "ZDIFFICULTY"
+    t.string "ZCOOKTIME"
+    t.string "ZPREPTIME"
+    t.string "ZTOTALTIME"
+    t.string "ZSOURCE"
+    t.string "ZSOURCEURL"
+    t.string "ZIMAGEURL"
+    t.string "ZPHOTOURL"
+    t.datetime "ZCREATED"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["ZNAME"], name: "index_zrecipe_on_zname"
+    t.index ["ZUID"], name: "index_zrecipe_on_zuid", unique: true
+  end
+
+  create_table "ZRECIPECATEGORY", primary_key: "Z_PK", force: :cascade do |t|
+    t.string "ZUID", null: false
+    t.string "ZNAME"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["ZUID"], name: "index_zrecipecategory_on_zuid", unique: true
+  end
+
+  create_table "Z_12CATEGORIES", id: false, force: :cascade do |t|
+    t.bigint "Z_12RECIPES", null: false
+    t.bigint "Z_13CATEGORIES", null: false
+    t.index ["Z_12RECIPES", "Z_13CATEGORIES"], name: "index_z12categories_pair", unique: true
+    t.index ["Z_13CATEGORIES"], name: "index_z12categories_on_category"
+  end
 
   create_table "nutrition_entries", force: :cascade do |t|
     t.date "logged_on", null: false
@@ -40,6 +82,19 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_02_190000) do
     t.datetime "updated_at", null: false
     t.index ["nutrition_entry_id", "recipe_id"], name: "index_entry_recipes_on_entry_and_recipe", unique: true
     t.index ["nutrition_entry_id"], name: "index_nutrition_entry_recipes_on_nutrition_entry_id"
+  end
+
+  create_table "paprika_meals", force: :cascade do |t|
+    t.string "uid", null: false
+    t.date "scheduled_date"
+    t.string "recipe_uid"
+    t.integer "meal_type"
+    t.string "name"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["recipe_uid"], name: "index_paprika_meals_on_recipe_uid"
+    t.index ["scheduled_date"], name: "index_paprika_meals_on_scheduled_date"
+    t.index ["uid"], name: "index_paprika_meals_on_uid", unique: true
   end
 
   create_table "user_settings", force: :cascade do |t|

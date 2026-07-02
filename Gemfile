@@ -6,7 +6,9 @@ gem "rails", "~> 8.0.2"
 gem "propshaft"
 # Use postgresql as the database for Active Record
 gem "pg", "~> 1.1"
-# Use sqlite3 for readonly Paprika database
+# Read/write the Paprika Recipe Manager cloud sync API
+gem "paprika_client", "~> 0.2"
+# sqlite3 is used only by the one-time local seed task (Paprika desktop DB)
 gem "sqlite3", "~> 2.1"
 # tsort is used by Rails internals but is no longer a default gem in Ruby 4.1+
 gem "tsort"
