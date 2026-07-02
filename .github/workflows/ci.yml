@@ -28,6 +28,10 @@ jobs:
       PGHOST: localhost
       PGUSER: postgres
       PGPASSWORD: postgres
+      # The real Paprika SQLite DB isn't present in CI; use a throwaway writable
+      # file (all Paprika queries are stubbed in the specs anyway).
+      PAPRIKA_DATABASE_PATH: tmp/paprika_ci.sqlite3
+      PAPRIKA_READONLY: "false"
 
     steps:
       - name: Checkout code
@@ -38,6 +42,11 @@ jobs:
         with:
           ruby-version: .ruby-version
           bundler-cache: true
+
+      - name: Build Paprika SQLite stub
+        run: |
+          mkdir -p tmp
+          sqlite3 tmp/paprika_ci.sqlite3 < db/paprika_schema.sql
 
       - name: Prepare test database
         run: bin/rails db:test:prepare

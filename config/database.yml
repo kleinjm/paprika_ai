@@ -23,16 +23,18 @@ development:
   <<: *default
   database: paprika_ai_development
 
+# Path/readonly are env-overridable so CI (where the real Paprika DB is absent)
+# can point at a throwaway SQLite file; all Paprika queries are stubbed in tests.
 readonly_paprika:
   adapter: sqlite3
-  database: "/Users/jklein/Library/Group Containers/72KVKW69K8.com.hindsightlabs.paprika.mac.v3/Data/Database/Paprika.sqlite"
-  readonly: true
+  database: <%= ENV.fetch("PAPRIKA_DATABASE_PATH") { "/Users/jklein/Library/Group Containers/72KVKW69K8.com.hindsightlabs.paprika.mac.v3/Data/Database/Paprika.sqlite" } %>
+  readonly: <%= ENV["PAPRIKA_READONLY"] != "false" %>
 
 # Writable connection to the same Paprika database. Used only to update the
 # ZNUTRITIONALINFO field with AI-computed batch macros.
 writable_paprika:
   adapter: sqlite3
-  database: "/Users/jklein/Library/Group Containers/72KVKW69K8.com.hindsightlabs.paprika.mac.v3/Data/Database/Paprika.sqlite"
+  database: <%= ENV.fetch("PAPRIKA_DATABASE_PATH") { "/Users/jklein/Library/Group Containers/72KVKW69K8.com.hindsightlabs.paprika.mac.v3/Data/Database/Paprika.sqlite" } %>
 
   # The specified database role being used to connect to PostgreSQL.
   # To create additional roles in PostgreSQL see `$ createuser --help`.
