@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Rails console connected to the production (Neon) database.
+#
+# Render's free tier has no SSH/Shell, so we run the console locally against
+# the production DB. Provide the Neon connection string via NEON_DATABASE_URL
+# (export it in your shell, or a gitignored env file you source) — it is never
+# stored in the repo.
+#
+# Usage:
+#   export NEON_DATABASE_URL="postgresql://…neon.tech/neondb?sslmode=require"
+#   bin/prod-console            # console
+#   bin/prod-console runner '…' # or any rails command, e.g. dbconsole
+set -euo pipefail
+
+: "${NEON_DATABASE_URL:?Set NEON_DATABASE_URL to your Neon connection string}"
+
+cd "$(dirname "$0")/.."
+
+exec env \
+  RAILS_ENV=production \
+  RAILS_MASTER_KEY="$(cat config/credentials/production.key)" \
+  DATABASE_URL="$NEON_DATABASE_URL" \
+  bin/rails "${@:-console}"
