@@ -25,4 +25,5 @@ class UserSettings < ApplicationRecord
   GOALS = %i[calorie_goal protein_goal carbs_goal fat_goal].freeze
 
   validates(*GOALS, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true)
+  validates :time_zone, inclusion: { in: ActiveSupport::TimeZone.all.map(&:name) }
 end

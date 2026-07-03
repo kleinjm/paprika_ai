@@ -11,6 +11,7 @@ div
             = f.input :protein_goal, label: "Protein (g)", input_html: { class: "form-control" }
             = f.input :carbs_goal, label: "Carbs (g)", input_html: { class: "form-control" }
             = f.input :fat_goal, label: "Fat (g)", input_html: { class: "form-control" }
+            = f.input :time_zone, collection: ActiveSupport::TimeZone.all.map(&:name), include_blank: false, label: "Time zone", input_html: { class: "form-select" }
             .mt-3
               = f.button :submit, "Save Goals", class: "btn btn-warning"
               = link_to "Cancel", profile_path, class: "btn btn-link"

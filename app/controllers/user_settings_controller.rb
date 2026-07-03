@@ -16,6 +16,6 @@ class UserSettingsController < ApplicationController
   private
 
   def settings_params
-    params.require(:user_settings).permit(:calorie_goal, :protein_goal, :carbs_goal, :fat_goal)
+    params.require(:user_settings).permit(:calorie_goal, :protein_goal, :carbs_goal, :fat_goal, :time_zone)
   end
 end

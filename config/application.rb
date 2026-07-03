@@ -21,7 +21,11 @@ module PaprikaAi
     # These settings can be overridden in specific environments using the files
     # in config/environments, which are processed later.
     #
-    # config.time_zone = "Central Time (US & Canada)"
+    # Default zone for anything outside a signed-in request (jobs, console,
+    # seeds). Per-request, ApplicationController switches to the user's zone.
+    config.time_zone = "Pacific Time (US & Canada)"
+    # Keep timestamps stored in UTC in the database.
+    config.active_record.default_timezone = :utc
     # config.eager_load_paths << Rails.root.join("extras")
   end
 end
