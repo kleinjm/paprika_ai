@@ -1,12 +1,6 @@
+# Coverage config lives in the project-root .simplecov file, which SimpleCov
+# loads automatically on require.
 require "simplecov"
-SimpleCov.start do
-  add_filter "/spec/"
-  add_filter "/config/"
-  add_filter "/db/"
-  add_filter "/app/models/paprika/"
-  add_filter "/app/services/chat_gpt_service.rb"
-  minimum_coverage 100
-end
 
 RSpec.configure do |config|
   # rspec-expectations config goes here. You can use an alternate
