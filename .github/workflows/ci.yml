@@ -53,3 +53,15 @@ jobs:
 
       - name: Run RSpec
         run: bundle exec rspec
+
+  # Deploy to Render only after tests pass, and only on pushes to main.
+  # Render auto-deploy is disabled; this hook is the single deploy trigger.
+  deploy:
+    needs: rspec
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render deploy
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: curl -fsS -X POST "$RENDER_DEPLOY_HOOK"
