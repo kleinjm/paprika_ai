@@ -1,0 +1,29 @@
+name: Paprika Pull
+
+# Refreshes the production recipe mirror (Neon) from the Paprika cloud on a
+# schedule. Runs the same `paprika:pull` rake task we run locally, in the
+# production environment, against Neon via DATABASE_URL.
+on:
+  schedule:
+    - cron: "17 8 * * *" # daily, 08:17 UTC
+  workflow_dispatch: {}    # allow manual runs from the Actions tab
+
+concurrency:
+  group: paprika-pull
+  cancel-in-progress: false
+
+jobs:
+  pull:
+    runs-on: ubuntu-latest
+    env:
+      RAILS_ENV: production
+      RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "4.0.5"
+          bundler-cache: true
+      - name: Pull recipes from Paprika cloud
+        run: bundle exec rails paprika:pull

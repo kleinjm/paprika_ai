@@ -23,6 +23,15 @@ namespace :paprika do
       next if known_hashes[uid] == summary["hash"] # unchanged since last pull
 
       full = client.recipe(uid)
+
+      # The app only ever uses live recipes, so keep trashed ones out of the
+      # mirror (and drop any that were just trashed, unless referenced by user
+      # data, to avoid orphaning staples/nutrition entries).
+      if bool_to_int(full["in_trash"]) == 1
+        remove_from_mirror(uid)
+        next
+      end
+
       record = Paprika::Recipe.find_or_initialize_by(ZUID: uid)
       record.assign_attributes(
         ZSYNCHASH: full["hash"],
@@ -110,6 +119,19 @@ end
 
 def bool_to_int(value)
   value ? 1 : 0
+end
+
+# Remove a recipe (and its category joins) from the mirror by uid, unless a
+# staple or nutrition entry still points at it — those references use Z_PK, so
+# deleting a referenced recipe would orphan user data.
+def remove_from_mirror(uid)
+  recipe = Paprika::Recipe.find_by(ZUID: uid)
+  return unless recipe
+  return if UserStapleRecipe.exists?(recipe_id: recipe.Z_PK) ||
+            NutritionEntryRecipe.exists?(recipe_id: recipe.Z_PK)
+
+  Paprika::Category.where(Z_12RECIPES: recipe.Z_PK).delete_all
+  recipe.destroy!
 end
 
 # Rebuild a recipe's category join rows from the cloud category-uid list.
