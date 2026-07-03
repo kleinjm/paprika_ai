@@ -7,7 +7,11 @@ class PortionSize
     "large bowl",
     "small plate",
     "medium plate",
-    "normal plate"
+    "large plate",
+    "handful",
+    "cup",
+    "slice",
+    "glass"
   ].freeze
 
   def self.all
