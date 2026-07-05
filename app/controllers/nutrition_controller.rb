@@ -62,6 +62,23 @@ class NutritionController < ApplicationController
     render_day_update
   end
 
+  # Delete or move (change the date of) several entries at once.
+  def bulk_update
+    @date = parse_date(params[:date])
+    selected = entries.where(id: Array(params[:entry_ids]))
+
+    if selected.none?
+      @reply = "No entries selected."
+    elsif params[:bulk_action] == "move"
+      bulk_move(selected)
+    else
+      count = selected.destroy_all.size
+      @reply = "Deleted #{count} #{'entry'.pluralize(count)}."
+    end
+
+    render_day_update
+  end
+
   def destroy_entry
     entry = entries.find(params[:id])
     @date = entry.logged_on
@@ -94,6 +111,15 @@ class NutritionController < ApplicationController
     params.require(:nutrition_entry).permit(
       :item, :calories, :protein, :carbs, :fat, :fiber, :saturated_fat, :sugar
     )
+  end
+
+  def bulk_move(selected)
+    target = Date.parse(params[:target_date].to_s)
+    count = selected.count
+    selected.update_all(logged_on: target, updated_at: Time.current)
+    @reply = "Moved #{count} #{'entry'.pluralize(count)} to #{target.strftime('%B %-d, %Y')}."
+  rescue ArgumentError, TypeError
+    @reply = "Pick a date to move the entries to."
   end
 
   def render_day_update

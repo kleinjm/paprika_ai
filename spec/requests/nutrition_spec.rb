@@ -221,6 +221,51 @@ RSpec.describe "Nutrition", type: :request do
       end
     end
 
+    context "bulk actions" do
+      let!(:a) { user.nutrition_entries.create!(logged_on: Date.new(2026, 6, 29), item: "banana", calories: 100) }
+      let!(:b) { user.nutrition_entries.create!(logged_on: Date.new(2026, 6, 29), item: "eggs", calories: 150) }
+      let!(:keep) { user.nutrition_entries.create!(logged_on: Date.new(2026, 6, 29), item: "toast", calories: 90) }
+
+      it "deletes the selected entries" do
+        expect do
+          post nutrition_bulk_path,
+               params: { date: "2026-06-29", bulk_action: "delete", entry_ids: [ a.id, b.id ] },
+               as: :turbo_stream
+        end.to change(NutritionEntry, :count).by(-2)
+
+        expect(response.media_type).to eq("text/vnd.turbo-stream.html")
+        expect(response.body).to include("Deleted 2 entries")
+        expect(NutritionEntry.exists?(keep.id)).to be(true)
+      end
+
+      it "moves the selected entries to another date" do
+        post nutrition_bulk_path,
+             params: { date: "2026-06-29", bulk_action: "move", target_date: "2026-07-01", entry_ids: [ a.id ] },
+             as: :turbo_stream
+
+        expect(a.reload.logged_on).to eq(Date.new(2026, 7, 1))
+        expect(b.reload.logged_on).to eq(Date.new(2026, 6, 29))
+        expect(response.body).to include("Moved 1 entry to July 1")
+      end
+
+      it "reports when a move has no target date" do
+        post nutrition_bulk_path,
+             params: { date: "2026-06-29", bulk_action: "move", target_date: "", entry_ids: [ a.id ] },
+             as: :turbo_stream
+
+        expect(a.reload.logged_on).to eq(Date.new(2026, 6, 29))
+        expect(response.body).to include("Pick a date")
+      end
+
+      it "reports when nothing is selected" do
+        post nutrition_bulk_path,
+             params: { date: "2026-06-29", bulk_action: "delete" },
+             as: :turbo_stream
+
+        expect(response.body).to include("No entries selected")
+      end
+    end
+
     context "editing an entry" do
       let!(:entry) do
         user.nutrition_entries.create!(logged_on: Date.new(2026, 6, 29), item: "banana", calories: 100, protein: 1)

@@ -1,37 +1,50 @@
 - if entries.any?
-  .d-flex.justify-content-end.p-2
-    = button_to "Clear day", nutrition_clear_path(date: entries.first.logged_on), method: :delete, class: "btn btn-sm btn-outline-danger", form: { data: { turbo_confirm: "Delete ALL entries for this day?" } }
-  .table-responsive
-    table.table.table-sm.mb-0
-      thead
-        tr
-          th Item
-          th.text-end Cal
-          th.text-end Protein
-          th.text-end Carbs
-          th.text-end Fat
-          th.text-end.text-muted Fiber
-          th.text-end.text-muted Sat Fat
-          th.text-end.text-muted Sugar
-          th
-      tbody
-        - entries.each do |entry|
+  div data-controller="bulk-select"
+    .d-flex.justify-content-between.align-items-center.flex-wrap.gap-2.p-2
+      / Bulk actions. Checkboxes live in the table below but are attached to this
+      / form via the HTML `form` attribute, so we avoid nesting forms.
+      = form_with url: nutrition_bulk_path, method: :post, id: "bulk-entries-form", class: "d-flex align-items-center flex-wrap gap-2 m-0" do |f|
+        = f.hidden_field :date, value: entries.first.logged_on.iso8601
+        = f.submit "Delete selected", name: "bulk_action", value: "delete", class: "btn btn-sm btn-outline-danger", disabled: true, data: { bulk_select_target: "submit", turbo_confirm: "Delete the selected entries?" }
+        span.text-muted.small move to
+        = date_field_tag :target_date, nil, class: "form-control form-control-sm w-auto", form: "bulk-entries-form", data: { bulk_select_target: "date" }
+        = f.submit "Move selected", name: "bulk_action", value: "move", class: "btn btn-sm btn-outline-primary", disabled: true, data: { bulk_select_target: "submit" }
+      = button_to "Clear day", nutrition_clear_path(date: entries.first.logged_on), method: :delete, class: "btn btn-sm btn-outline-danger", form: { data: { turbo_confirm: "Delete ALL entries for this day?" } }
+    .table-responsive
+      table.table.table-sm.mb-0
+        thead
           tr
-            td
-              - recipe_id = entry.nutrition_entry_recipes.first&.recipe_id
-              - if recipe_id && entry.recipe_match.present?
-                = link_to entry.recipe_match, recipe_path(recipe_id), class: "badge bg-light text-dark text-decoration-none"
-              - else
-                = entry.item
-            td.text-end = entry.calories
-            td.text-end = entry.protein.present? ? "#{entry.protein.to_f.round}g" : "—"
-            td.text-end = entry.carbs.present? ? "#{entry.carbs.to_f.round}g" : "—"
-            td.text-end = entry.fat.present? ? "#{entry.fat.to_f.round}g" : "—"
-            td.text-end.text-muted = entry.fiber.present? ? "#{entry.fiber.to_f.round}g" : "—"
-            td.text-end.text-muted = entry.saturated_fat.present? ? "#{entry.saturated_fat.to_f.round}g" : "—"
-            td.text-end.text-muted = entry.sugar.present? ? "#{entry.sugar.to_f.round}g" : "—"
-            td.text-end.text-nowrap
-              = link_to "✎", edit_nutrition_entry_path(entry), class: "btn btn-sm btn-link p-0 me-2", aria: { label: "Edit entry" }
-              = button_to "✕", nutrition_entry_path(entry), method: :delete, class: "btn btn-sm btn-link text-danger p-0", form: { data: { turbo_confirm: "Delete this entry?" }, class: "d-inline" }, aria: { label: "Delete entry" }
+            th
+              input type="checkbox" aria-label="Select all" data-bulk-select-target="all" data-action="bulk-select#toggleAll"
+            th Item
+            th.text-end Cal
+            th.text-end Protein
+            th.text-end Carbs
+            th.text-end Fat
+            th.text-end.text-muted Fiber
+            th.text-end.text-muted Sat Fat
+            th.text-end.text-muted Sugar
+            th
+        tbody
+          - entries.each do |entry|
+            tr
+              td
+                input type="checkbox" name="entry_ids[]" value=entry.id form="bulk-entries-form" aria-label="Select entry" data-bulk-select-target="checkbox" data-action="bulk-select#update"
+              td
+                - recipe_id = entry.nutrition_entry_recipes.first&.recipe_id
+                - if recipe_id && entry.recipe_match.present?
+                  = link_to entry.recipe_match, recipe_path(recipe_id), class: "badge bg-light text-dark text-decoration-none"
+                - else
+                  = entry.item
+              td.text-end = entry.calories
+              td.text-end = entry.protein.present? ? "#{entry.protein.to_f.round}g" : "—"
+              td.text-end = entry.carbs.present? ? "#{entry.carbs.to_f.round}g" : "—"
+              td.text-end = entry.fat.present? ? "#{entry.fat.to_f.round}g" : "—"
+              td.text-end.text-muted = entry.fiber.present? ? "#{entry.fiber.to_f.round}g" : "—"
+              td.text-end.text-muted = entry.saturated_fat.present? ? "#{entry.saturated_fat.to_f.round}g" : "—"
+              td.text-end.text-muted = entry.sugar.present? ? "#{entry.sugar.to_f.round}g" : "—"
+              td.text-end.text-nowrap
+                = link_to "✎", edit_nutrition_entry_path(entry), class: "btn btn-sm btn-link p-0 me-2", aria: { label: "Edit entry" }
+                = button_to "✕", nutrition_entry_path(entry), method: :delete, class: "btn btn-sm btn-link text-danger p-0", form: { data: { turbo_confirm: "Delete this entry?" }, class: "d-inline" }, aria: { label: "Delete entry" }
 - else
   .card-body.text-muted Nothing logged yet today.
