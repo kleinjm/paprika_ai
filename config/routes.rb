@@ -35,6 +35,7 @@ Rails.application.routes.draw do
   post "nutrition/log" => "nutrition#log", as: :nutrition_log
   delete "nutrition/clear" => "nutrition#clear_day", as: :nutrition_clear
   post "nutrition/entries/bulk" => "nutrition#bulk_update", as: :nutrition_bulk
+  post "nutrition/sync" => "nutrition#sync", as: :nutrition_sync
   get "nutrition/entries/:id/edit" => "nutrition#edit_entry", as: :edit_nutrition_entry
   patch "nutrition/entries/:id" => "nutrition#update_entry"
   delete "nutrition/entries/:id" => "nutrition#destroy_entry", as: :nutrition_entry

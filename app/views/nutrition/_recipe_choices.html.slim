@@ -1,0 +1,19 @@
+#recipe_choices
+  - if @scheduled_meals.any?
+    .d-flex.flex-wrap.gap-2.mb-3
+      - @scheduled_meals.each do |meal|
+        button.btn.btn-sm.btn-outline-warning.text-dark.rounded-pill.text-nowrap type="button" data-action="meal-picker#fill" data-meal-picker-title-param=meal.title data-meal-picker-recipe-id-param=meal.recipe.id
+          = meal.title
+
+  - if @staple_recipes.any?
+    .d-flex.flex-wrap.gap-2.mb-3
+      - @staple_recipes.each do |recipe|
+        button.btn.btn-sm.btn-outline-success.text-dark.rounded-pill.text-nowrap type="button" data-action="meal-picker#fill" data-meal-picker-title-param=recipe.name data-meal-picker-recipe-id-param=recipe.id
+          = recipe.name
+
+  - if @other_recipes.any?
+    .mb-3
+      select.form-select.form-select-sm data-action="meal-picker#pick"
+        option value="" selected=true Add another recipe…
+        - @other_recipes.each do |recipe|
+          option value=recipe.id data-title=recipe.name = recipe.name

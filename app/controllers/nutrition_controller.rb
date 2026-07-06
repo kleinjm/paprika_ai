@@ -50,6 +50,27 @@ class NutritionController < ApplicationController
     end
   end
 
+  # Manually pull the latest recipes/meals from the Paprika cloud, then refresh
+  # the recipe-choice pills. Handy for meals added same-day.
+  def sync
+    @date = parse_date(params[:date])
+
+    begin
+      result = PaprikaSync.new.call
+      @reply = "Synced from Paprika — #{result.meals} meals, " \
+               "#{result.recipes_changed} #{'recipe'.pluralize(result.recipes_changed)} updated."
+    rescue StandardError => e
+      @reply = "Sync failed: #{e.message}"
+    end
+
+    load_recipe_choices
+
+    respond_to do |format|
+      format.turbo_stream { render :sync }
+      format.html { redirect_to nutrition_path(date: @date) }
+    end
+  end
+
   def history
     @days = entries.daily_totals
     @goals = current_user.settings

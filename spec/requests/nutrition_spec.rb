@@ -266,6 +266,36 @@ RSpec.describe "Nutrition", type: :request do
       end
     end
 
+    context "syncing meals" do
+      it "runs a sync and refreshes the pills via turbo stream" do
+        result = PaprikaSync::Result.new(categories: 30, recipes_changed: 2, meals: 5)
+        allow(PaprikaSync).to receive(:new).and_return(instance_double(PaprikaSync, call: result))
+
+        post nutrition_sync_path(date: "2026-06-29"), as: :turbo_stream
+
+        expect(response.media_type).to eq("text/vnd.turbo-stream.html")
+        expect(response.body).to include("recipe_choices")
+        expect(response.body).to include("Synced from Paprika — 5 meals, 2 recipes updated")
+      end
+
+      it "reports a friendly message when the sync fails" do
+        allow(PaprikaSync).to receive(:new).and_raise(StandardError, "boom")
+
+        post nutrition_sync_path(date: "2026-06-29"), as: :turbo_stream
+
+        expect(response.body).to include("Sync failed: boom")
+      end
+
+      it "redirects for an HTML request" do
+        allow(PaprikaSync).to receive(:new)
+          .and_return(instance_double(PaprikaSync, call: PaprikaSync::Result.new(categories: 0, recipes_changed: 0, meals: 0)))
+
+        post nutrition_sync_path(date: "2026-06-29")
+
+        expect(response).to redirect_to(nutrition_path(date: Date.new(2026, 6, 29)))
+      end
+    end
+
     context "editing an entry" do
       let!(:entry) do
         user.nutrition_entries.create!(logged_on: Date.new(2026, 6, 29), item: "banana", calories: 100, protein: 1)
