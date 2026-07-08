@@ -1,0 +1,22 @@
+div
+  .row.justify-content-center
+    .col-lg-8
+      = link_to "← Back", recipe_path(@recipe.id), class: "btn btn-sm btn-outline-secondary mb-3"
+      h1.h3.mb-1 = @recipe.name
+      p.text-muted.small Review the shorthand rewrite below, edit if needed, then save.
+
+      .card.shadow-sm.mb-4
+        .card-header
+          h2.h6.mb-0 Directions as written
+        .card-body
+          .prose.text-muted = simple_format(@original_directions)
+
+      = form_with url: recipe_path(@recipe.id), scope: :recipe, method: :patch do |f|
+        .card.shadow-sm.mb-3
+          .card-header
+            h2.h6.mb-0 Rewritten in shorthand
+          .card-body
+            = f.text_area :directions, value: @rewritten_directions, rows: 16, class: "form-control font-monospace"
+        .d-flex.gap-2
+          = f.submit "Save directions", class: "btn btn-primary"
+          = link_to "Cancel", recipe_path(@recipe.id), class: "btn btn-outline-secondary"

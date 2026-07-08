@@ -22,7 +22,8 @@ div
 
       - if @recipe.directions.present?
         .card.shadow-sm
-          .card-header
+          .card-header.d-flex.justify-content-between.align-items-center
             h2.h6.mb-0 Directions
+            = link_to "Rewrite in shorthand", edit_recipe_path(@recipe.id), class: "btn btn-sm btn-outline-primary"
           .card-body
             .prose = simple_format(@recipe.directions)

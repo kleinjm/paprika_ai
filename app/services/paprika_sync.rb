@@ -11,11 +11,16 @@ class PaprikaSync
     @client = client
   end
 
+  # PaprikaSync is the one legitimate writer of the local mirror (cloud →
+  # cache), so the whole pull runs inside the `syncing` window that the models'
+  # read-only guard checks for.
   def call
-    category_pks = sync_categories
-    changed = sync_recipes(category_pks)
-    meals = sync_meals
-    Result.new(categories: category_pks.size, recipes_changed: changed, meals: meals)
+    Paprika::ApplicationRecord.syncing do
+      category_pks = sync_categories
+      changed = sync_recipes(category_pks)
+      meals = sync_meals
+      Result.new(categories: category_pks.size, recipes_changed: changed, meals: meals)
+    end
   end
 
   private

@@ -30,11 +30,25 @@ module Paprika
       }
     end
 
-    # Persist AI-computed batch macros: update the local mirror and write the
-    # value back to the Paprika cloud so it syncs to all devices.
+    # Persist AI-computed batch macros. The cloud is the source of truth, so we
+    # push there first; only if that succeeds do we refresh the local cache so
+    # the UI reflects the change before the next full sync.
     def update_nutritional_info!(text)
-      update!(ZNUTRITIONALINFO: text)
       PaprikaCloud.push_nutritional_info(uid: uid, text: text)
+      refresh_cache!(ZNUTRITIONALINFO: text)
+    end
+
+    # Persist rewritten (shorthand) directions. Cloud first, then cache refresh.
+    def update_directions!(text)
+      PaprikaCloud.push_directions(uid: uid, text: text)
+      refresh_cache!(ZDIRECTIONS: text)
+    end
+
+    private
+
+    # Update the read-only mirror to match what we just wrote to the cloud.
+    def refresh_cache!(attrs)
+      self.class.syncing { update!(attrs) }
     end
   end
 end
