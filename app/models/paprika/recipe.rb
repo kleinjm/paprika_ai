@@ -19,10 +19,13 @@ module Paprika
     # signed photo URL, so it's the fallback when there's no personal photo.
     alias_attribute :image_url, :ZIMAGEURL
 
-    # Best available image for display: the user's own photo if present, else the
-    # original source image. nil when the recipe has no image at all.
+    # Best available image for display. The Paprika photo URL is a *signed,
+    # time-limited* S3 link — once its Expires timestamp passes, S3 returns 403 —
+    # so we only use it while still valid and otherwise fall back to the original
+    # source image, which is a stable public URL. nil when there's no usable
+    # image at all.
     def display_image_url
-      photo_url.presence || image_url.presence
+      fresh_photo_url || image_url.presence
     end
 
     # Paprika marks trashed recipes with ZINTRASH = 1; live recipes are 0 (or NULL).
@@ -65,6 +68,19 @@ module Paprika
     end
 
     private
+
+    # The user's Paprika photo only if its signed URL hasn't expired yet.
+    def fresh_photo_url
+      return if photo_url.blank?
+
+      photo_url unless signed_url_expired?(photo_url)
+    end
+
+    # True when a signed S3 URL carries an Expires timestamp already in the past.
+    def signed_url_expired?(url)
+      expires = url[/[?&]Expires=(\d+)/, 1]
+      expires.present? && expires.to_i < Time.now.to_i
+    end
 
     # Update the read-only mirror to match what we just wrote to the cloud.
     def refresh_cache!(attrs)
