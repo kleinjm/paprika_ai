@@ -12,6 +12,9 @@ div
           - if VerifiedServings.ai_generated?(@recipe.servings)
             span.badge.bg-secondary.ms-1 AI estimate
 
+      - if @recipe.display_image_url.present?
+        = image_tag @recipe.display_image_url, class: "img-fluid rounded shadow-sm mb-4", alt: @recipe.name, loading: "lazy"
+
       - if @recipe.nutritional_info.present?
         .card.shadow-sm.mb-4
           .card-header

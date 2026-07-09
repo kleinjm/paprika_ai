@@ -1,0 +1,22 @@
+div
+  .row.justify-content-center
+    .col-lg-8
+      = link_to "← Home", authenticated_root_path, class: "btn btn-sm btn-outline-secondary mb-3"
+      h1.h3.mb-3 Recipes
+
+      = form_with url: recipes_path, method: :get, class: "mb-4" do
+        .input-group
+          = text_field_tag :q, @query, class: "form-control", placeholder: "Search recipes by name…", autofocus: true
+          = submit_tag "Search", class: "btn btn-primary"
+
+      - if @recipes.any?
+        p.text-muted.small = "#{@recipes.size} #{'recipe'.pluralize(@recipes.size)}"
+        .list-group
+          - @recipes.each do |recipe|
+            = link_to recipe.name, recipe_path(recipe.id), class: "list-group-item list-group-item-action"
+      - else
+        p.text-muted
+          - if @query.present?
+            | No recipes match “#{@query}”.
+          - else
+            | No recipes found.

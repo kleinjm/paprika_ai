@@ -1,4 +1,14 @@
 class RecipesController < ApplicationController
+  # Alphabetical list of live recipes, optionally filtered by a name search.
+  def index
+    @query = params[:q].to_s.strip
+    @recipes = Paprika::Recipe.not_trashed.order(:ZNAME)
+    if @query.present?
+      escaped = Paprika::Recipe.sanitize_sql_like(@query)
+      @recipes = @recipes.where('"ZNAME" ILIKE ?', "%#{escaped}%")
+    end
+  end
+
   def show
     @recipe = Paprika::Recipe.find_by!(Z_PK: params[:id])
   end
