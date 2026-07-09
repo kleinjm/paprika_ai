@@ -20,17 +20,24 @@ module Paprika
   class ApplicationRecord < ActiveRecord::Base
     self.abstract_class = true
 
-    # Per-thread flag: are we currently applying a cloud → mirror sync?
-    thread_mattr_accessor :sync_in_progress, instance_accessor: false
+    # Per-thread flag: are we currently applying a cloud → mirror sync? Stored in
+    # a single thread-local key shared by every subclass — not per-class state —
+    # so a window opened on the base class (as PaprikaSync does) is visible to
+    # the guard on each concrete model it writes (Recipe, RecipeCategory, …).
+    SYNC_FLAG = :paprika_sync_in_progress
+
+    def self.sync_in_progress
+      Thread.current[SYNC_FLAG]
+    end
 
     # Wrap cloud → mirror writes. Only PaprikaSync and the cache-refresh step of
     # PaprikaCloud's push helpers should open this window.
     def self.syncing
-      previous = sync_in_progress
-      self.sync_in_progress = true
+      previous = Thread.current[SYNC_FLAG]
+      Thread.current[SYNC_FLAG] = true
       yield
     ensure
-      self.sync_in_progress = previous
+      Thread.current[SYNC_FLAG] = previous
     end
 
     before_save :ensure_syncing!
@@ -39,7 +46,7 @@ module Paprika
     private
 
     def ensure_syncing!
-      return if self.class.sync_in_progress
+      return if Thread.current[SYNC_FLAG]
 
       raise ReadOnlyMirrorError,
             "#{self.class.name} is a read-only cache of the Paprika cloud. " \
