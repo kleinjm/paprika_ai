@@ -36,4 +36,30 @@ RSpec.describe PaprikaCloud do
       expect(recipe.nutritional_info).to eq("Calories: 200 calories")
     end
   end
+
+  describe ".push_directions" do
+    it "fetches the recipe, updates directions, and saves it" do
+      recipe = PaprikaClient::Recipe.new("uid" => "ABC", "directions" => "old")
+      allow(PaprikaClient::Client).to receive(:new).and_return(paprika_client)
+      expect(paprika_client).to receive(:recipe).with("ABC").and_return(recipe)
+      expect(paprika_client).to receive(:save_recipe).with(recipe)
+
+      described_class.push_directions(uid: "ABC", text: "step 1 -> step 2")
+
+      expect(recipe["directions"]).to eq("step 1 -> step 2")
+    end
+  end
+
+  describe ".push_servings" do
+    it "fetches the recipe, updates servings, and saves it" do
+      recipe = PaprikaClient::Recipe.new("uid" => "ABC", "servings" => "")
+      allow(PaprikaClient::Client).to receive(:new).and_return(paprika_client)
+      expect(paprika_client).to receive(:recipe).with("ABC").and_return(recipe)
+      expect(paprika_client).to receive(:save_recipe).with(recipe)
+
+      described_class.push_servings(uid: "ABC", text: "4 servings (AI Generated - 7/8/26)")
+
+      expect(recipe["servings"]).to eq("4 servings (AI Generated - 7/8/26)")
+    end
+  end
 end

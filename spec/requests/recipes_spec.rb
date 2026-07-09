@@ -32,6 +32,30 @@ RSpec.describe "Recipes", type: :request do
     expect(response.body).to include("Warm the beans")
   end
 
+  it "shows the shorthand rewrite for review on the edit page" do
+    recipe = double("Recipe", id: 569, name: "Eggs And Beans",
+      directions: "Cook the eggs. Warm the beans.")
+    allow(Paprika::Recipe).to receive(:find_by!).with(Z_PK: "569").and_return(recipe)
+    allow(RecipeShorthand).to receive(:new)
+      .and_return(instance_double(RecipeShorthand, rewrite: "eggs -> fry; beans -> warm"))
+
+    get edit_recipe_path(569)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Cook the eggs")             # original directions
+    expect(response.body).to include("eggs -&gt; fry; beans -&gt; warm") # rewritten shorthand
+  end
+
+  it "saves edited directions and redirects to the recipe" do
+    recipe = double("Recipe", id: 569)
+    allow(Paprika::Recipe).to receive(:find_by!).with(Z_PK: "569").and_return(recipe)
+    expect(recipe).to receive(:update_directions!).with("eggs -> fry")
+
+    patch recipe_path(569), params: { recipe: { directions: "eggs -> fry" } }
+
+    expect(response).to redirect_to(recipe_path(569))
+  end
+
   it "lists recipes and filters by an ILIKE name search" do
     matching = Paprika::Recipe.none
     relation = instance_double(ActiveRecord::Relation)

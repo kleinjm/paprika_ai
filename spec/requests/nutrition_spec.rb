@@ -416,6 +416,18 @@ RSpec.describe "Nutrition", type: :request do
 
         expect(Rails.logger).to have_received(:warn).with(/Failed to write batch macros for Chili/)
       end
+
+      it "still logs the entry when writing servings back fails" do
+        allow(salad).to receive(:update_servings!).and_raise(StandardError, "db locked")
+        allow(Rails.logger).to receive(:warn)
+
+        expect do
+          post nutrition_log_path, params: { message: "chili and salad", recipe_ids: [ 42, 7 ] },
+                                   as: :turbo_stream
+        end.to change(NutritionEntry, :count).by(2)
+
+        expect(Rails.logger).to have_received(:warn).with(/Failed to write servings for Bean Salad/)
+      end
     end
   end
 
