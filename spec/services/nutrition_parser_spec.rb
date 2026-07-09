@@ -5,7 +5,7 @@ require_relative "../../app/services/nutrition_parser"
 RSpec.describe NutritionParser do
   let(:gemini) { double("GeminiService") }
   let(:recipe) do
-    double("Recipe", id: 42, name: "Chili", nutritional_info: nil, ingredients: "beans, beef")
+    double("Recipe", id: 42, name: "Chili", servings: "Serves 4", nutritional_info: nil, ingredients: "beans, beef")
   end
 
   describe "#parse" do
@@ -22,6 +22,7 @@ RSpec.describe NutritionParser do
       expect(captured).to include("Chili")
       expect(captured).to include("beans, beef")
       expect(captured).to include(%("id":42))
+      expect(captured).to include("Serves 4") # servings passed so the LLM can anchor portions
       expect(captured).to include("1/4 of the chili")
     end
 

@@ -15,6 +15,12 @@ RSpec.describe PaprikaSync do
     allow(client).to receive(:meals).and_return([])
   end
 
+  # Seed pre-existing mirror rows the way a real sync would — inside the syncing
+  # window the read-only guard requires. Plain create! outside it raises.
+  def seed_mirror(&block)
+    Paprika::ApplicationRecord.syncing(&block)
+  end
+
   it "upserts categories, changed recipes (with category links), and meals" do
     allow(client).to receive(:categories).and_return(
       [ { "uid" => "cat-1", "name" => "Dinner" }, { "uid" => "cat-2", "name" => "Vegan" } ]
@@ -36,7 +42,7 @@ RSpec.describe PaprikaSync do
   end
 
   it "skips recipes whose sync hash is unchanged" do
-    Paprika::Recipe.create!(ZUID: "r-1", ZSYNCHASH: "new-r-1", ZNAME: "old")
+    seed_mirror { Paprika::Recipe.create!(ZUID: "r-1", ZSYNCHASH: "new-r-1", ZNAME: "old") }
     allow(client).to receive(:recipes).and_return([ { "uid" => "r-1", "hash" => "new-r-1" } ])
     expect(client).not_to receive(:recipe)
 
@@ -44,7 +50,7 @@ RSpec.describe PaprikaSync do
   end
 
   it "drops a newly-trashed recipe that nothing references" do
-    recipe = Paprika::Recipe.create!(ZUID: "r-x", ZSYNCHASH: "old", ZNAME: "gone")
+    recipe = seed_mirror { Paprika::Recipe.create!(ZUID: "r-x", ZSYNCHASH: "old", ZNAME: "gone") }
     allow(client).to receive(:recipes).and_return([ { "uid" => "r-x", "hash" => "new-r-x" } ])
     allow(client).to receive(:recipe).with("r-x").and_return(full_recipe("r-x", in_trash: true))
 
@@ -52,7 +58,7 @@ RSpec.describe PaprikaSync do
   end
 
   it "keeps a trashed recipe that a staple still references" do
-    recipe = Paprika::Recipe.create!(ZUID: "r-y", ZSYNCHASH: "old", ZNAME: "keep")
+    recipe = seed_mirror { Paprika::Recipe.create!(ZUID: "r-y", ZSYNCHASH: "old", ZNAME: "keep") }
     user = User.create!(email: "s@example.com", password: "password")
     user.user_staple_recipes.create!(recipe_id: recipe.Z_PK)
     allow(client).to receive(:recipes).and_return([ { "uid" => "r-y", "hash" => "new-r-y" } ])

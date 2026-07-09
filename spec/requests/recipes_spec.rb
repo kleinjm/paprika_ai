@@ -14,6 +14,8 @@ RSpec.describe "Recipes", type: :request do
   it "shows the recipe's details" do
     recipe = double("Recipe", id: 569, name: "Eggs And Beans",
       recipe_categories: [ double(name: "Breakfast") ],
+      servings: "Serves 4",
+      display_image_url: "https://example.com/eggs.jpg",
       nutritional_info: "Verified\nCalories: 298",
       ingredients: "2 eggs\n1 cup beans",
       directions: "Cook the eggs. Warm the beans.")
@@ -24,7 +26,22 @@ RSpec.describe "Recipes", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Eggs And Beans")
     expect(response.body).to include("Breakfast")
+    expect(response.body).to include("Serves 4")
+    expect(response.body).to include("https://example.com/eggs.jpg")
     expect(response.body).to include("1 cup beans")
     expect(response.body).to include("Warm the beans")
+  end
+
+  it "lists recipes and filters by an ILIKE name search" do
+    matching = Paprika::Recipe.none
+    relation = instance_double(ActiveRecord::Relation)
+    allow(Paprika::Recipe).to receive(:not_trashed).and_return(relation)
+    allow(relation).to receive(:order).with(:ZNAME).and_return(relation)
+    allow(relation).to receive(:where).with('"ZNAME" ILIKE ?', "%chili%").and_return(matching)
+
+    get recipes_path(q: "chili")
+
+    expect(response).to have_http_status(:ok)
+    expect(relation).to have_received(:where).with('"ZNAME" ILIKE ?', "%chili%")
   end
 end

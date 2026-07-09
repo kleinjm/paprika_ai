@@ -330,20 +330,20 @@ RSpec.describe "Nutrition", type: :request do
 
     context "when items match selected recipes" do
       let(:chili) do
-        instance_double(Paprika::Recipe, id: 42, name: "Chili", nutritional_info: "Calories: 999")
+        instance_double(Paprika::Recipe, id: 42, name: "Chili", nutritional_info: "Calories: 999", servings: nil)
       end
       let(:salad) do
-        instance_double(Paprika::Recipe, id: 7, name: "Bean Salad", nutritional_info: nil)
+        instance_double(Paprika::Recipe, id: 7, name: "Bean Salad", nutritional_info: nil, servings: "Serves 4")
       end
       let(:result) do
         NutritionParser::Result.new(
           entries: [
             { "item" => "medium bowl chili", "calories" => 600, "protein" => 45, "carbs" => 30, "fat" => 20,
               "fiber" => 12, "saturated_fat" => 6, "sugar" => 5,
-              "recipe_id" => 42,
+              "recipe_id" => 42, "batch_servings" => 4,
               "batch_macros" => { "calories" => 2400, "protein" => 180, "carbs" => 120, "fat" => 80, "fiber" => 48, "saturated_fat" => 24, "sugar" => 20 } },
             { "item" => "small bowl bean salad", "calories" => 200, "protein" => 8, "carbs" => 25, "fat" => 6,
-              "recipe_id" => 7,
+              "recipe_id" => 7, "batch_servings" => 5,
               "batch_macros" => { "calories" => 800, "protein" => 32, "carbs" => 100, "fat" => 24, "fiber" => 40, "saturated_fat" => 8, "sugar" => 16 } }
           ],
           reply: "Logged both."
@@ -354,6 +354,8 @@ RSpec.describe "Nutrition", type: :request do
         allow(Paprika::Recipe).to receive(:where).with(Z_PK: [ 42, 7 ]).and_return([ chili, salad ])
         allow(chili).to receive(:update_nutritional_info!)
         allow(salad).to receive(:update_nutritional_info!)
+        allow(chili).to receive(:update_servings!)
+        allow(salad).to receive(:update_servings!)
       end
 
       it "creates one entry per item, each linked to its recipe" do
@@ -383,10 +385,20 @@ RSpec.describe "Nutrition", type: :request do
                                  as: :turbo_stream
       end
 
+      it "standardizes each matched recipe's serving count" do
+        expect(chili).to receive(:update_servings!).with(ServingsSkill.format(4))
+        expect(salad).to receive(:update_servings!).with(ServingsSkill.format(5))
+
+        post nutrition_log_path, params: { message: "chili and salad", recipe_ids: [ 42, 7 ] },
+                                 as: :turbo_stream
+      end
+
       it "does not write to recipes in read-only mode" do
         allow(NutritionSkill).to receive(:write_enabled?).and_return(false)
         expect(chili).not_to receive(:update_nutritional_info!)
         expect(salad).not_to receive(:update_nutritional_info!)
+        expect(chili).not_to receive(:update_servings!)
+        expect(salad).not_to receive(:update_servings!)
 
         post nutrition_log_path, params: { message: "chili and salad", recipe_ids: [ 42, 7 ] },
                                  as: :turbo_stream
@@ -453,7 +465,7 @@ RSpec.describe "Nutrition", type: :request do
 
     context "Verified recipe via the LLM (with a fraction)" do
       let(:recipe) do
-        instance_double(Paprika::Recipe, id: 42, name: "Chili",
+        instance_double(Paprika::Recipe, id: 42, name: "Chili", servings: "Verified 4 servings",
           nutritional_info: "Verified\nCalories: 800\nProtein: 40")
       end
 
