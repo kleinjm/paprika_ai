@@ -40,13 +40,36 @@ bin/rails console  # Start Rails console
 
 ### Testing
 ```bash
-bin/rails test  # Run all tests
+bundle exec rspec  # Run the test suite (RSpec; CI enforces 100% line coverage)
 ```
 
 ### Linting
 ```bash
 bundle exec rubocop  # Ruby linting
 ```
+
+## Deploying (CI + Render)
+
+Deploys are gated on CI: a push to `main` runs RSpec via GitHub Actions
+(`.github/workflows/ci.yml`), and only a green run triggers the Render deploy
+hook. A red run deploys nothing.
+
+**Any push to `main` MUST be followed by polling CI until it passes.** After
+pushing:
+
+1. Poll the CI run for the pushed commit until it completes, e.g.:
+   ```bash
+   RUN=$(gh run list --branch main --limit 1 --json databaseId --jq '.[0].databaseId')
+   gh run watch "$RUN" --exit-status
+   ```
+2. **If red**, read the failures (`gh run view "$RUN" --log-failed`), fix them
+   locally, run `bundle exec rspec` to confirm green + 100% coverage, then push
+   again and poll again — repeat until green. Note RSpec can exit non-zero on a
+   coverage shortfall even with 0 test failures, so check coverage, not just the
+   example count.
+3. Do not consider the work done until CI is green. When it is, the Render
+   deploy is triggered automatically; optionally confirm it went live with the
+   Render CLI (`render deploys list <service-id>`) or `curl -sI https://paprika-ai.onrender.com/up`.
 
 ## Architecture
 
