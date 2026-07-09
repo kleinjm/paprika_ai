@@ -26,6 +26,7 @@ RSpec.describe "Recipes", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Eggs And Beans")
     expect(response.body).to include("Breakfast")
+    expect(response.body).to include('href="/recipes"') # back button returns to the index
     expect(response.body).to include("Serves 4")
     expect(response.body).to include("https://example.com/eggs.jpg")
     expect(response.body).to include("1 cup beans")

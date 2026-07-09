@@ -1,7 +1,7 @@
 div
   .row.justify-content-center
     .col-lg-8
-      = link_to "← Back", nutrition_path, class: "btn btn-sm btn-outline-secondary mb-3"
+      = link_to "← Back", recipes_path, class: "btn btn-sm btn-outline-secondary mb-3"
       h1.h3.mb-1 = @recipe.name
       - if @recipe.recipe_categories.any?
         p.text-muted.small = @recipe.recipe_categories.map(&:name).join(", ")
