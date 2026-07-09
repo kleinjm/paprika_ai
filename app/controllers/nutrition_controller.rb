@@ -210,6 +210,7 @@ class NutritionController < ApplicationController
 
       nutrition_entry.nutrition_entry_recipes.create!(recipe_id: recipe.id)
       write_batch_macros(recipe, entry["batch_macros"])
+      write_batch_servings(recipe, entry["batch_servings"])
     end
   end
 
@@ -297,5 +298,22 @@ class NutritionController < ApplicationController
     recipe.update_nutritional_info!(standardized)
   rescue StandardError => e
     Rails.logger.warn("Failed to write batch macros for #{recipe.name}: #{e.message}")
+  end
+
+  # Standardize the recipe's serving count with the AI's estimate. Overwrites
+  # anything that isn't hand-flagged "Verified" — blank, a prior AI estimate, or
+  # unstandardized/garbage free text — mirroring the nutrition write-back's
+  # Verified-only guard. Honors the read-only toggle.
+  def write_batch_servings(recipe, batch_servings)
+    return unless recipe && ServingsSkill.write_enabled?
+    return unless VerifiedServings.writable?(recipe.servings)
+
+    standardized = ServingsSkill.format(batch_servings)
+    return if standardized.blank?
+    return if standardized == recipe.servings.to_s.strip
+
+    recipe.update_servings!(standardized)
+  rescue StandardError => e
+    Rails.logger.warn("Failed to write servings for #{recipe.name}: #{e.message}")
   end
 end

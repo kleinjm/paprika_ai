@@ -10,6 +10,9 @@ module Paprika
     alias_attribute :ingredients, :ZINGREDIENTS
     alias_attribute :directions, :ZDIRECTIONS
     alias_attribute :nutritional_info, :ZNUTRITIONALINFO
+    # Free-text yield/serving count as entered in Paprika, e.g. "Serves 4",
+    # "Yield: 12", or just "4". Often blank. Used to anchor portion estimates.
+    alias_attribute :servings, :ZSERVINGS
 
     # Paprika marks trashed recipes with ZINTRASH = 1; live recipes are 0 (or NULL).
     scope :not_trashed, -> { where(ZINTRASH: [ nil, 0 ]) }
@@ -42,6 +45,12 @@ module Paprika
     def update_directions!(text)
       PaprikaCloud.push_directions(uid: uid, text: text)
       refresh_cache!(ZDIRECTIONS: text)
+    end
+
+    # Persist an AI-estimated serving count. Cloud first, then cache refresh.
+    def update_servings!(text)
+      PaprikaCloud.push_servings(uid: uid, text: text)
+      refresh_cache!(ZSERVINGS: text)
     end
 
     private

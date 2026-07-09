@@ -23,6 +23,11 @@ module PaprikaCloud
     update_recipe(uid, directions: text)
   end
 
+  # Write an AI-estimated serving count back to a recipe in the Paprika cloud.
+  def push_servings(uid:, text:)
+    update_recipe(uid, servings: text)
+  end
+
   # Update one or more fields on a cloud recipe. Fetches the current recipe (for
   # the full field set), applies the changes, and saves (which recomputes the
   # sync hash and notifies the apps). The cloud is the source of truth; the

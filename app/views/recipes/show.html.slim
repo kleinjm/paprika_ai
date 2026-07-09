@@ -6,6 +6,12 @@ div
       - if @recipe.recipe_categories.any?
         p.text-muted.small = @recipe.recipe_categories.map(&:name).join(", ")
 
+      - if @recipe.servings.present?
+        p.text-muted.small.mb-3
+          | Servings: #{@recipe.servings}
+          - if VerifiedServings.ai_generated?(@recipe.servings)
+            span.badge.bg-secondary.ms-1 AI estimate
+
       - if @recipe.nutritional_info.present?
         .card.shadow-sm.mb-4
           .card-header

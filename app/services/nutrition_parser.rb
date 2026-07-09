@@ -17,8 +17,25 @@ class NutritionParser
     Two logging modes:
     - HOME COOKING: If they reference one of their master recipes (possibly as a
       fraction or serving, e.g. "1/4 of the chili"), work out the batch macros for
-      the whole recipe, then the portion they actually ate. A recipe may include
-      existing "nutritional_info":
+      the whole recipe, then the portion they actually ate.
+
+      ANCHOR THE PORTION TO THE RECIPE'S YIELD. A recipe may include a free-text
+      "servings" field (e.g. "Serves 4", "Yield: 12", "3-4", or just "4"). Parse
+      it to a number of servings N and treat ONE serving as 1/N of the whole
+      recipe. Most recipes make several servings, so a normal single portion is a
+      SMALL fraction of the batch — do NOT default to a large fraction. When the
+      user gives vague plate/bowl sizes rather than a fraction, map them to
+      servings, not to a large share of the pot:
+        * "small plate/bowl" or "a little"  -> about 0.5 to 0.75 of one serving
+        * "medium plate/bowl" or unspecified -> about 1 serving
+        * "large plate/bowl" or "a big portion" -> about 1.5 servings
+      Then convert to a fraction of the WHOLE recipe by dividing by N (e.g. a
+      medium plate of a recipe that yields 12 is roughly 1/12 = ~0.08, NOT 1/4).
+      If "servings" is blank or unparseable, estimate the yield conservatively
+      from the ingredient quantities (assume the batch feeds several people)
+      before working out the portion; err toward SMALLER portions when unsure.
+
+      A recipe may include existing "nutritional_info":
         * VERIFIED DATA: If nutritional_info starts with the word "Verified", it
           was entered by hand from a nutrition label and the app will apply those
           numbers itself. Do NOT estimate its macros. Set "batch_macros" to null.
@@ -40,7 +57,8 @@ class NutritionParser
           "fiber": int, "saturated_fat": int, "sugar": int,
           "recipe_id": int (the "id" of the matched recipe from the reference list) or null,
           "recipe_fraction": float fraction of the whole recipe eaten (home cooking) or null,
-          "batch_macros": { "calories": int, "protein": int, "carbs": int, "fat": int, "fiber": int, "saturated_fat": int, "sugar": int } or null
+          "batch_macros": { "calories": int, "protein": int, "carbs": int, "fat": int, "fiber": int, "saturated_fat": int, "sugar": int } or null,
+          "batch_servings": int number of servings the WHOLE recipe yields (home cooking) or null
         }
       ],
       "reply": "a short friendly confirmation of what you logged and the day's running totals"
@@ -53,6 +71,13 @@ class NutritionParser
     one of the provided reference recipes; use the recipe's exact "id". For
     anything not in the reference list, set them to null. Set "batch_macros" to
     null for Verified recipes. Round all numbers to integers.
+
+    ALWAYS set "batch_servings" for a matched HOME COOKING recipe (even Verified
+    ones): your best estimate of how many servings the WHOLE recipe yields. If
+    the recipe's "servings" field is present and sensible, use that number;
+    otherwise estimate the yield from the ingredient quantities. This is the same
+    N you used to anchor the portion. Use null only when there is no matched
+    recipe. It must be consistent with "recipe_fraction" (one serving = 1/N).
   PROMPT
 
   def initialize(gemini: GeminiService.new)
@@ -81,6 +106,7 @@ class NutritionParser
       {
         id: r.id,
         name: r.name,
+        servings: r.servings.presence,
         nutritional_info: r.nutritional_info.presence,
         ingredients: r.ingredients
       }
