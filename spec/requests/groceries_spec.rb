@@ -39,6 +39,16 @@ RSpec.describe "Groceries", type: :request do
       expect(response.body).to include("Eggs")
     end
 
+    it "collapses identical duplicate to-buy items into one line with a count" do
+      4.times { |n| seed(uid: "e#{n}", name: "eggs", purchased: false, aisle: "ALWAYS GET", list_name: "Home") }
+
+      get groceries_path
+
+      # One "eggs" line with a ×4 badge, not four separate rows.
+      expect(response.body).to include("×4")
+      expect(response.body.scan(/>eggs</).size).to eq(1)
+    end
+
     it "shows empty states when there's nothing to buy or purchased" do
       get groceries_path
       expect(response.body).to include("all caught up")

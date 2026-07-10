@@ -1,8 +1,9 @@
 class GroceriesController < ApplicationController
   def index
-    # Top section: everything still to buy, across all lists, grouped by aisle.
-    @to_buy_by_aisle = Paprika::GroceryItem.to_buy.group_by(&:aisle_label)
-    @to_buy_count = Paprika::GroceryItem.to_buy.count
+    # Top section: everything still to buy, across all lists, grouped by aisle,
+    # with identical duplicate items collapsed into one line.
+    @to_buy_by_aisle = Paprika::GroceryItem.to_buy_by_aisle
+    @to_buy_count = @to_buy_by_aisle.values.sum(&:size)
     # Bottom section: what was purchased, grouped by the day we recorded it.
     @purchased_by_date = Paprika::GroceryItem
       .purchased_history

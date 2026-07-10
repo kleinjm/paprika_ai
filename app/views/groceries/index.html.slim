@@ -14,16 +14,18 @@ div
           span.badge.bg-primary = @to_buy_count
         - if @to_buy_by_aisle.any?
           ul.list-group.list-group-flush
-            - @to_buy_by_aisle.each do |aisle, items|
+            - @to_buy_by_aisle.each do |aisle, lines|
               li.list-group-item.bg-light.fw-semibold.text-muted.small.text-uppercase = aisle
-              - items.each do |item|
+              - lines.each do |line|
                 li.list-group-item.d-flex.justify-content-between.align-items-center
                   span
-                    = item.name
-                    - if item.list_name.present?
-                      span.badge.bg-secondary.ms-2 = item.list_name
-                  - if item.quantity.present?
-                    span.text-muted.small = item.quantity
+                    = line.name
+                    - if line.count > 1
+                      span.badge.bg-warning.text-dark.ms-2 = "×#{line.count}"
+                    - if line.list_name.present?
+                      span.badge.bg-secondary.ms-2 = line.list_name
+                  - if line.quantity.present?
+                    span.text-muted.small = line.quantity
         - else
           .card-body.text-muted Nothing to buy right now. Nice — all caught up.
 
