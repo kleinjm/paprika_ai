@@ -7,7 +7,7 @@
           = meal.title
           - if servings
             span.text-muted.ms-1 |
-            = servings
+            span.ms-1 = servings
 
   - if @staple_recipes.any?
     .d-flex.flex-wrap.gap-2.mb-3
@@ -17,7 +17,7 @@
           = recipe.name
           - if servings
             span.text-muted.ms-1 |
-            = servings
+            span.ms-1 = servings
 
   - if @other_recipes.any?
     .mb-3

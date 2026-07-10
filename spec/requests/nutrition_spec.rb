@@ -61,7 +61,7 @@ RSpec.describe "Nutrition", type: :request do
 
       get nutrition_path
 
-      expect(response.body).to match(/Granola\s*<span[^>]*>\s*\|\s*<\/span>\s*4/)
+      expect(response.body).to match(/Granola\s*<span[^>]*>\s*\|\s*<\/span>\s*<span[^>]*>\s*4\s*<\/span>/)
       expect(response.body).not_to match(/Mystery Stew\s*<span/)
     end
 
