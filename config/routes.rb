@@ -30,6 +30,9 @@ Rails.application.routes.draw do
 
   resources :recipes, only: [ :index, :show, :edit, :update ]
 
+  get "groceries" => "groceries#index", as: :groceries
+  post "groceries/sync" => "groceries#sync", as: :groceries_sync
+
   get "nutrition" => "nutrition#show", as: :nutrition
   get "nutrition/history" => "nutrition#history", as: :nutrition_history
   post "nutrition/log" => "nutrition#log", as: :nutrition_log

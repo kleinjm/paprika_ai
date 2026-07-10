@@ -1,14 +1,15 @@
 # frozen_string_literal: true
 
-# Pulls categories, recipes, and scheduled meals from the Paprika cloud into the
-# local mirror. Shared by the scheduled `paprika:pull` task and the in-app
-# "Sync meals" control. Recipes are incremental (by sync hash); meals are bulk
-# upserted so a manual sync stays fast enough for a web request.
+# Pulls categories, recipes, scheduled meals, and grocery items from the Paprika
+# cloud into the local mirror. Shared by the scheduled `paprika:pull` task and
+# the in-app "Sync" controls. Recipes are incremental (by sync hash); meals are
+# bulk upserted so a manual sync stays fast enough for a web request.
 class PaprikaSync
-  Result = Struct.new(:categories, :recipes_changed, :meals, keyword_init: true)
+  Result = Struct.new(:categories, :recipes_changed, :meals, :groceries, keyword_init: true)
 
-  def initialize(client: PaprikaCloud.client)
+  def initialize(client: PaprikaCloud.client, today: Date.current)
     @client = client
+    @today = today
   end
 
   # PaprikaSync is the one legitimate writer of the local mirror (cloud →
@@ -19,7 +20,8 @@ class PaprikaSync
       category_pks = sync_categories
       changed = sync_recipes(category_pks)
       meals = sync_meals
-      Result.new(categories: category_pks.size, recipes_changed: changed, meals: meals)
+      groceries = sync_groceries
+      Result.new(categories: category_pks.size, recipes_changed: changed, meals: meals, groceries: groceries)
     end
   end
 
@@ -78,6 +80,54 @@ class PaprikaSync
     end
     Paprika::Meal.upsert_all(rows, unique_by: :uid) if rows.any?
     rows.size
+  end
+
+  # Upsert every grocery item across all lists. The cloud has no purchase date,
+  # so we record `purchased_on` only for check-offs we actually witness — an item
+  # we already had as "to buy" that flips to purchased gets stamped with today.
+  # Items that are already purchased the first time we ever see them (e.g. the
+  # initial backfill, or added-and-checked between syncs) are left unstamped so
+  # they don't flood the history with a false date. Purchased items are kept as
+  # history even after Paprika deletes them on "clear list"; only unpurchased
+  # items that vanish from the cloud (deleted before buying) are removed.
+  def sync_groceries
+    list_names = client.grocery_lists.to_h { |list| [ list["uid"], list["name"] ] }
+    cloud = client.groceries
+    seen = []
+
+    cloud.each do |item|
+      seen << item["uid"]
+      record = Paprika::GroceryItem.find_or_initialize_by(uid: item["uid"])
+      record.assign_attributes(
+        name: item["name"],
+        purchased: !!item["purchased"],
+        purchased_on: purchased_on_for(record, !!item["purchased"]),
+        aisle: item["aisle"],
+        quantity: item["quantity"],
+        list_uid: item["list_uid"],
+        list_name: list_names[item["list_uid"]],
+        recipe: item["recipe"],
+        recipe_uid: item["recipe_uid"],
+        order_flag: item["order_flag"]
+      )
+      record.save!
+    end
+
+    Paprika::GroceryItem.where.not(uid: seen).where(purchased: false).delete_all if seen.any?
+    cloud.size
+  end
+
+  # The purchased date to store, reading the record's pre-update state:
+  # - not purchased            -> nil
+  # - already purchased        -> keep whatever date we had (nil for backfill)
+  # - to-buy -> purchased      -> stamp today (a transition we witnessed)
+  # - brand new & purchased    -> nil (don't invent a date we never observed)
+  def purchased_on_for(record, purchased)
+    return nil unless purchased
+    return record.purchased_on if record.persisted? && record.purchased?
+    return @today if record.persisted?
+
+    nil
   end
 
   def recipe_attributes(full)

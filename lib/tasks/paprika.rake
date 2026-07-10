@@ -7,6 +7,7 @@ namespace :paprika do
     puts "categories: #{result.categories}"
     puts "recipes: #{result.recipes_changed} added/updated"
     puts "meals: #{result.meals}"
+    puts "groceries: #{result.groceries}"
   end
 
   desc "One-time dev seed: copy the local Paprika SQLite DB into the mirror, preserving Z_PK"

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_03_154142) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_10_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -82,6 +82,25 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_03_154142) do
     t.datetime "updated_at", null: false
     t.index ["nutrition_entry_id", "recipe_id"], name: "index_entry_recipes_on_entry_and_recipe", unique: true
     t.index ["nutrition_entry_id"], name: "index_nutrition_entry_recipes_on_nutrition_entry_id"
+  end
+
+  create_table "paprika_grocery_items", force: :cascade do |t|
+    t.string "uid", null: false
+    t.string "name"
+    t.boolean "purchased", default: false, null: false
+    t.date "purchased_on"
+    t.string "aisle"
+    t.string "quantity"
+    t.string "list_uid"
+    t.string "list_name"
+    t.string "recipe"
+    t.string "recipe_uid"
+    t.integer "order_flag"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["purchased"], name: "index_paprika_grocery_items_on_purchased"
+    t.index ["purchased_on"], name: "index_paprika_grocery_items_on_purchased_on"
+    t.index ["uid"], name: "index_paprika_grocery_items_on_uid", unique: true
   end
 
   create_table "paprika_meals", force: :cascade do |t|

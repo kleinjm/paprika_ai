@@ -13,6 +13,14 @@ RSpec.describe PaprikaSync do
     allow(client).to receive(:categories).and_return([])
     allow(client).to receive(:recipes).and_return([])
     allow(client).to receive(:meals).and_return([])
+    allow(client).to receive(:groceries).and_return([])
+    allow(client).to receive(:grocery_lists).and_return([])
+  end
+
+  def grocery(uid, purchased:, list_uid: "L1", aisle: "Produce")
+    { "uid" => uid, "name" => "Item #{uid}", "purchased" => purchased,
+      "aisle" => aisle, "quantity" => "1", "list_uid" => list_uid,
+      "recipe" => nil, "recipe_uid" => nil, "order_flag" => 1 }
   end
 
   # Seed pre-existing mirror rows the way a real sync would — inside the syncing
@@ -38,7 +46,7 @@ RSpec.describe PaprikaSync do
     expect(recipe.name).to eq("Test r-1")
     expect(recipe.recipe_categories.pluck(:ZUID)).to eq([ "cat-1" ]) # unknown-cat filtered out
     expect(Paprika::Meal.find_by(uid: "m-1").recipe_uid).to eq("r-1")
-    expect(result.to_h).to eq(categories: 2, recipes_changed: 1, meals: 1)
+    expect(result.to_h).to eq(categories: 2, recipes_changed: 1, meals: 1, groceries: 0)
   end
 
   it "skips recipes whose sync hash is unchanged" do
@@ -73,5 +81,67 @@ RSpec.describe PaprikaSync do
 
     expect { sync.call }.not_to change(Paprika::Recipe, :count)
     expect(sync.call.recipes_changed).to eq(0)
+  end
+
+  describe "groceries" do
+    subject(:sync) { described_class.new(client: client, today: Date.new(2026, 7, 10)) }
+
+    it "upserts items across all lists with resolved list names, unstamped on first sight" do
+      allow(client).to receive(:grocery_lists).and_return(
+        [ { "uid" => "L1", "name" => "Home" }, { "uid" => "L2", "name" => "Kate" } ]
+      )
+      allow(client).to receive(:groceries).and_return(
+        [ grocery("g-1", purchased: false, list_uid: "L1"),
+          grocery("g-2", purchased: true, list_uid: "L2") ]
+      )
+
+      expect(sync.call.groceries).to eq(2)
+
+      to_buy = Paprika::GroceryItem.find_by(uid: "g-1")
+      expect(to_buy.list_name).to eq("Home")
+      expect(to_buy.purchased_on).to be_nil
+      # Already purchased the first time we see it -> no invented date.
+      expect(Paprika::GroceryItem.find_by(uid: "g-2").purchased_on).to be_nil
+    end
+
+    it "stamps today only when it witnesses a to-buy item flip to purchased" do
+      allow(client).to receive(:groceries).and_return([ grocery("g-1", purchased: false) ])
+      sync.call
+      expect(Paprika::GroceryItem.find_by(uid: "g-1").purchased_on).to be_nil
+
+      allow(client).to receive(:groceries).and_return([ grocery("g-1", purchased: true) ])
+      described_class.new(client: client, today: Date.new(2026, 7, 11)).call
+
+      item = Paprika::GroceryItem.find_by(uid: "g-1")
+      expect(item.purchased).to be(true)
+      expect(item.purchased_on).to eq(Date.new(2026, 7, 11))
+    end
+
+    it "keeps purchased history but drops unpurchased items that vanish from the cloud" do
+      allow(client).to receive(:groceries).and_return(
+        [ grocery("keep", purchased: false), grocery("gone", purchased: false) ]
+      )
+      sync.call
+      # Witness both being purchased so they carry a date, then clear upstream.
+      allow(client).to receive(:groceries).and_return(
+        [ grocery("keep", purchased: true), grocery("gone", purchased: true) ]
+      )
+      described_class.new(client: client, today: Date.new(2026, 7, 11)).call
+
+      # Next sync: "gone" removed from the cloud entirely, "keep" still there.
+      allow(client).to receive(:groceries).and_return([ grocery("keep", purchased: true) ])
+      described_class.new(client: client, today: Date.new(2026, 7, 12)).call
+
+      expect(Paprika::GroceryItem.pluck(:uid)).to contain_exactly("keep", "gone")
+    end
+
+    it "removes an unpurchased item deleted before it was ever bought" do
+      allow(client).to receive(:groceries).and_return([ grocery("g-1", purchased: false) ])
+      sync.call
+      allow(client).to receive(:groceries).and_return([ grocery("g-2", purchased: false) ])
+      sync.call
+
+      expect(Paprika::GroceryItem.exists?(uid: "g-1")).to be(false)
+    end
   end
 end
