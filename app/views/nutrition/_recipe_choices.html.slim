@@ -2,14 +2,22 @@
   - if @scheduled_meals.any?
     .d-flex.flex-wrap.gap-2.mb-3
       - @scheduled_meals.each do |meal|
+        - servings = VerifiedServings.count(meal.recipe.servings)
         button.btn.btn-sm.btn-outline-warning.text-dark.rounded-pill.text-nowrap type="button" data-action="meal-picker#fill" data-meal-picker-title-param=meal.title data-meal-picker-recipe-id-param=meal.recipe.id
           = meal.title
+          - if servings
+            span.text-muted.ms-1 |
+            = servings
 
   - if @staple_recipes.any?
     .d-flex.flex-wrap.gap-2.mb-3
       - @staple_recipes.each do |recipe|
+        - servings = VerifiedServings.count(recipe.servings)
         button.btn.btn-sm.btn-outline-success.text-dark.rounded-pill.text-nowrap type="button" data-action="meal-picker#fill" data-meal-picker-title-param=recipe.name data-meal-picker-recipe-id-param=recipe.id
           = recipe.name
+          - if servings
+            span.text-muted.ms-1 |
+            = servings
 
   - if @other_recipes.any?
     .mb-3

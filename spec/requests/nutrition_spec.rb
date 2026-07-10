@@ -42,7 +42,7 @@ RSpec.describe "Nutrition", type: :request do
     end
 
     it "renders a clickable pill (with recipe id) only for meals that have a recipe" do
-      with_recipe = double("Meal", title: "Instant Pot Stuffed Pepper Soup", recipe: double(id: 521))
+      with_recipe = double("Meal", title: "Instant Pot Stuffed Pepper Soup", recipe: double(id: 521, servings: "8 servings"))
       without_recipe = double("Meal", title: "Freeform note", recipe: nil)
       stub_paprika(scheduled_meals: [ with_recipe, without_recipe ])
 
@@ -52,6 +52,17 @@ RSpec.describe "Nutrition", type: :request do
       expect(response.body).to include("meal-picker#fill")
       expect(response.body).to include("521")
       expect(response.body).not_to include("Freeform note")
+    end
+
+    it "shows the serving count divider on a pill when the recipe has servings" do
+      with_servings = double("Meal", title: "Granola", recipe: double(id: 1, servings: "4 servings"))
+      without_servings = double("Meal", title: "Mystery Stew", recipe: double(id: 2, servings: nil))
+      stub_paprika(scheduled_meals: [ with_servings, without_servings ])
+
+      get nutrition_path
+
+      expect(response.body).to match(/Granola\s*<span[^>]*>\s*\|\s*<\/span>\s*4/)
+      expect(response.body).not_to match(/Mystery Stew\s*<span/)
     end
 
     it "shows each nutrient against its goal with the remaining difference" do
@@ -75,7 +86,7 @@ RSpec.describe "Nutrition", type: :request do
     end
 
     it "renders a pill for each staple recipe" do
-      stub_paprika(staple_recipes: [ double(id: 88, name: "Weekly Overnight Oats") ])
+      stub_paprika(staple_recipes: [ double(id: 88, name: "Weekly Overnight Oats", servings: "2") ])
 
       get nutrition_path
 
