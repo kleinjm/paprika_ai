@@ -475,6 +475,86 @@ RSpec.describe "Nutrition", type: :request do
       post nutrition_log_path, params: { message: "Mystery Stew", recipe_ids: [ 9 ] }, as: :turbo_stream
     end
 
+    context "explicit serving-count portions (no LLM)" do
+      # Batch nutrition for a recipe that yields 8 — one serving is 1/8 of these.
+      let(:chili) do
+        instance_double(Paprika::Recipe, id: 88, name: "Vegan Black Beans Chili",
+          servings: "8 servings (AI Generated - 7/8/26)",
+          nutritional_info: "Meal Total (AI Generated - 7/2/26)\nCalories: 3051 kcal\nProtein: 160 g\n" \
+                            "Carbohydrates: 480 g\nFat: 40 g\nFiber: 96 g\nSaturated Fat: 8 g\nSugar: 24 g")
+      end
+
+      before { stub_selected(chili) }
+
+      it "divides the batch by the yield for one serving, without the LLM" do
+        expect(NutritionParser).not_to receive(:new)
+
+        expect do
+          post nutrition_log_path, params: { message: "1 serving Vegan Black Beans Chili", recipe_ids: [ 88 ] },
+                                   as: :turbo_stream
+        end.to change(NutritionEntry, :count).by(1)
+
+        entry = NutritionEntry.last
+        expect(entry.item).to eq("1 serving Vegan Black Beans Chili")
+        expect(entry.calories).to eq(381) # 3051 / 8, not the whole pot
+        expect(entry.protein).to eq(20)   # 160 / 8
+        expect(entry.fiber).to eq(12)     # 96 / 8
+        expect(entry.nutrition_entry_recipes.pluck(:recipe_id)).to eq([ 88 ])
+        expect(response.body).to include("from saved nutrition")
+      end
+
+      it "scales a half serving and pluralizes the label" do
+        post nutrition_log_path, params: { message: "0.5 serving Vegan Black Beans Chili", recipe_ids: [ 88 ] },
+                                 as: :turbo_stream
+
+        entry = NutritionEntry.last
+        expect(entry.item).to eq("0.5 servings Vegan Black Beans Chili")
+        expect(entry.calories).to eq(191) # 3051 / 8 * 0.5 = 190.6875
+      end
+
+      it "scales one-and-a-half servings regardless of pill order" do
+        post nutrition_log_path, params: { message: "Vegan Black Beans Chili 1.5 servings", recipe_ids: [ 88 ] },
+                                 as: :turbo_stream
+
+        entry = NutritionEntry.last
+        expect(entry.item).to eq("1.5 servings Vegan Black Beans Chili")
+        expect(entry.calories).to eq(572) # 3051 / 8 * 1.5 = 572.0625
+      end
+
+      it "divides a Verified label by its serving count too" do
+        recipe = instance_double(Paprika::Recipe, id: 12, name: "Eggs And Beans",
+          servings: "Verified 4 servings",
+          nutritional_info: "Verified\nCalories: 1200\nProtein: 96")
+        stub_selected(recipe)
+        expect(NutritionParser).not_to receive(:new)
+
+        post nutrition_log_path, params: { message: "1 serving Eggs And Beans", recipe_ids: [ 12 ] }, as: :turbo_stream
+
+        entry = NutritionEntry.last
+        expect(entry.calories).to eq(300) # 1200 / 4
+        expect(entry.protein).to eq(24)   # 96 / 4
+      end
+
+      it "falls back to the LLM when the recipe has no parseable yield" do
+        recipe = instance_double(Paprika::Recipe, id: 13, name: "Yieldless Stew", servings: nil,
+          nutritional_info: "Meal Total (AI Generated - 7/2/26)\nCalories: 800 kcal")
+        stub_selected(recipe)
+        parser = instance_double(NutritionParser, parse: NutritionParser::Result.new(entries: [], reply: "Hmm."))
+        expect(NutritionParser).to receive(:new).and_return(parser)
+
+        post nutrition_log_path, params: { message: "1 serving Yieldless Stew", recipe_ids: [ 13 ] }, as: :turbo_stream
+      end
+
+      it "falls back to the LLM when the recipe has no local nutrition to scale" do
+        recipe = instance_double(Paprika::Recipe, id: 14, name: "Blank Stew", servings: "Serves 6", nutritional_info: nil)
+        stub_selected(recipe)
+        parser = instance_double(NutritionParser, parse: NutritionParser::Result.new(entries: [], reply: "Hmm."))
+        expect(NutritionParser).to receive(:new).and_return(parser)
+
+        post nutrition_log_path, params: { message: "2 servings Blank Stew", recipe_ids: [ 14 ] }, as: :turbo_stream
+      end
+    end
+
     context "Verified recipe via the LLM (with a fraction)" do
       let(:recipe) do
         instance_double(Paprika::Recipe, id: 42, name: "Chili", servings: "Verified 4 servings",

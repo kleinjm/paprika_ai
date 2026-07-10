@@ -16,13 +16,14 @@ class NutritionController < ApplicationController
     message = params[:message].to_s.strip
 
     recipes = selected_recipes
-    direct = direct_log_entries(message, recipes)
+    direct = direct_serving_entries(message, recipes) || direct_log_entries(message, recipes)
 
     if direct
-      # Just recipe pills with locally-known nutrition — log straight from the
-      # stored data without calling the LLM.
+      # Just recipe pills (optionally with an explicit serving count) whose
+      # nutrition we already know — log straight from the stored data, doing any
+      # per-serving division ourselves rather than trusting the LLM to divide.
       persist_direct(direct, message)
-      @reply = "Logged #{direct.map { |recipe, _| recipe.name }.join(', ')} from saved nutrition."
+      @reply = "Logged #{direct.map { |recipe, _n, _i| recipe.name }.join(', ')} from saved nutrition."
     elsif message.blank?
       @reply = "Tell me what you ate and I'll log it."
     elsif !GeminiService.configured?
@@ -241,20 +242,73 @@ class NutritionController < ApplicationController
     end
   end
 
+  # A plain number of servings ("1 serving", "0.5 servings", "1.5 servings"),
+  # which is all that's left once the recipe pill names are stripped out.
+  SERVING_QUANTITY = /\A(\d+(?:\.\d+)?)\s*servings?\z/i
+
   # If the message is only recipe pill names (no extra text) and every selected
   # recipe already has locally-known nutrition (Verified or AI Generated), return
-  # [recipe, nutrients] pairs so we can log without the LLM. Otherwise nil.
+  # [recipe, nutrients, item] triples so we can log without the LLM. Otherwise nil.
   def direct_log_entries(message, recipes)
     return nil if recipes.none? || !only_recipe_names?(message, recipes)
 
-    pairs = recipes.map { |recipe| [ recipe, local_nutrition(recipe) ] }
-    pairs unless pairs.any? { |_recipe, nutrients| nutrients.nil? }
+    triples = recipes.map { |recipe| [ recipe, local_nutrition(recipe), recipe.name ] }
+    triples unless triples.any? { |_recipe, nutrients, _item| nutrients.nil? }
+  end
+
+  # If the message is only recipe pill names plus an explicit serving count
+  # (e.g. "1 serving Chili"), scale each recipe's stored batch nutrition by
+  # qty / yield ourselves and log without the LLM. Returns [recipe, nutrients,
+  # item] triples, or nil to fall through (unparseable qty, or a recipe missing
+  # local nutrition or a yield we can divide by).
+  def direct_serving_entries(message, recipes)
+    return nil if recipes.none?
+
+    match = strip_recipe_names(message, recipes).strip.match(SERVING_QUANTITY)
+    return nil unless match
+
+    qty = match[1].to_f
+    return nil unless qty.positive?
+
+    triples = recipes.map { |recipe| [ recipe, serving_nutrition(recipe, qty), serving_item(recipe, qty) ] }
+    triples unless triples.any? { |_recipe, nutrients, _item| nutrients.nil? }
+  end
+
+  # The recipe's stored batch nutrition scaled to `qty` servings — batch x
+  # (qty / N), where N is the recipe's yield. nil when we can't do this
+  # deterministically (no local nutrition, or no parseable serving count).
+  def serving_nutrition(recipe, qty)
+    nutrients = local_nutrition(recipe)
+    return nil if nutrients.nil?
+
+    yield_count = VerifiedServings.count(recipe.servings)
+    return nil unless yield_count&.positive?
+
+    factor = qty / yield_count
+    nutrients.transform_values { |value| value && value * factor }
+  end
+
+  # Readable log label, e.g. "1 serving Chili" or "1.5 servings Chili".
+  def serving_item(recipe, qty)
+    unit = "serving".pluralize(qty == 1 ? 1 : 2)
+    "#{format_quantity(qty)} #{unit} #{recipe.name}"
+  end
+
+  # Trim a trailing ".0" so whole counts read as "1", not "1.0".
+  def format_quantity(qty)
+    qty == qty.to_i ? qty.to_i.to_s : qty.to_s
   end
 
   def only_recipe_names?(message, recipes)
-    leftover = message.to_s.dup
-    recipes.each { |recipe| leftover = leftover.sub(/#{Regexp.escape(recipe.name)}/i, "") }
-    leftover.gsub(/[^a-z0-9]/i, "").blank?
+    strip_recipe_names(message, recipes).gsub(/[^a-z0-9]/i, "").blank?
+  end
+
+  # The message with each selected recipe's name removed, leaving only whatever
+  # portion text the user added (a serving count, a bowl/plate size, or nothing).
+  def strip_recipe_names(message, recipes)
+    recipes.reduce(message.to_s.dup) do |leftover, recipe|
+      leftover.sub(/#{Regexp.escape(recipe.name)}/i, "")
+    end
   end
 
   # Parsed nutrients for a recipe whose field is Verified or AI-Generated, else nil.
@@ -265,12 +319,12 @@ class NutritionController < ApplicationController
     VerifiedNutrition.parse(info)
   end
 
-  def persist_direct(pairs, raw_input)
-    pairs.each do |recipe, nutrients|
+  def persist_direct(triples, raw_input)
+    triples.each do |recipe, nutrients, item|
       entry = entries.create!(
         logged_on: @date,
         raw_input: raw_input,
-        item: recipe.name,
+        item: item,
         calories: nutrients[:calories]&.round,
         protein: nutrients[:protein]&.round,
         carbs: nutrients[:carbs]&.round,

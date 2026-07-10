@@ -39,7 +39,7 @@ div
               = render partial: "recipe_choices"
 
               .input-group
-                = f.text_field :message, placeholder: "e.g. small bowl bean salad, medium plate chicken breast", class: "form-control", autofocus: true, autocomplete: "off", data: { meal_picker_target: "field" }
+                = f.text_field :message, placeholder: "e.g. 1 serving chili, handful of almonds", class: "form-control", autofocus: true, autocomplete: "off", data: { meal_picker_target: "field" }
                 = f.submit "Log", class: "btn btn-warning"
 
       .card.shadow-sm
